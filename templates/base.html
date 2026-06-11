@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vaultify{% endblock %}</title>
+    <meta name="description" content="Vaultify — your secure password manager.">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "ui-sans-serif", "system-ui"],
+                        display: ["Space Grotesk", "Inter", "ui-sans-serif"],
+                    },
+                    boxShadow: {
+                        glow: "0 0 0 1px rgba(148,163,184,0.12), 0 24px 80px rgba(15,23,42,0.55)",
+                        "glow-cyan": "0 0 24px rgba(103,213,255,0.35)",
+                    },
+                    colors: {
+                        brand: {
+                            50: "#ecfeff",
+                            400: "#67d5ff",
+                            500: "#3fa8ff",
+                            600: "#2563eb",
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+
+    <!-- Background gradient -->
+    <div class="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.14),_transparent_32%),linear-gradient(180deg,_#020617,_#0f172a)]"></div>
+
+    <!-- ── Navbar ── -->
+    <nav class="sticky top-0 z-50 border-b border-white/8 bg-slate-950/80 backdrop-blur-xl">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+            <!-- Brand -->
+            <a href="/vault/dashboard" class="flex items-center gap-2.5 group transition-transform hover:scale-[1.02]">
+                <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7 text-cyan-400 stroke-current group-hover:text-cyan-300 transition-colors" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <span class="font-display text-lg font-bold tracking-tight text-white">Vaultify</span>
+            </a>
+
+            <!-- Nav links -->
+            <div class="flex items-center gap-1 sm:gap-2">
+                <a href="/vault/dashboard"
+                   class="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white">
+                    Vault
+                </a>
+                <a href="/folders"
+                   class="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white">
+                    Folders
+                </a>
+                <a href="/profile"
+                   class="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white">
+                    {% if user %}{{ user.username }}{% else %}Profile{% endif %}
+                </a>
+                <a href="/logout"
+                   class="ml-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 hover:text-red-300">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Flash Message ── -->
+    {% set flash = flash if flash is defined else none %}
+    {% if flash %}
+    <div id="flash-banner"
+         class="{% if flash.type == 'success' %}bg-emerald-900/60 border-emerald-500/30 text-emerald-300{% else %}bg-red-900/60 border-red-500/30 text-red-300{% endif %} border-b px-4 py-3 text-center text-sm font-medium backdrop-blur">
+        {% if flash.type == 'success' %}✅{% else %}⚠️{% endif %}
+        {{ flash.message }}
+        <button onclick="document.getElementById('flash-banner').remove()"
+                class="ml-3 opacity-60 hover:opacity-100">✕</button>
+    </div>
+    {% endif %}
+
+    <!-- ── Toast (JS-driven) ── -->
+    <div id="toast"
+         class="pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-xl border border-emerald-500/30 bg-slate-900 px-5 py-3 text-sm font-medium text-emerald-300 shadow-glow backdrop-blur transition-all">
+    </div>
+
+    <!-- ── Main Content ── -->
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="/static/js/main.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block title %}Vaultify | Secure Password Manager{% endblock %}
+
+{% block content %}
+<section class="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+    <div>
+        <span class="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
+            End-to-end encrypted password manager
+        </span>
+
+        <h1 class="mt-6 max-w-3xl font-display text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Keep your credentials secure and accessible.
+        </h1>
+
+        <p class="mt-5 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+            Vaultify securely stores your passwords using AES encryption. Organize your accounts with folders,
+            generate strong passwords, and access everything from any browser using your master password.
+        </p>
+
+        <div id="signin" class="mt-8 flex flex-wrap gap-3">
+            <a class="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 hover:scale-[1.02] active:scale-[0.98]" href="/signup">Create account</a>
+            <a class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10" href="/login">Sign in</a>
+        </div>
+
+        <div class="mt-10 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-glow backdrop-blur">
+                <strong class="block text-lg text-white">AES-256</strong>
+                <span class="mt-1 block text-sm text-slate-400">Fernet symmetric encryption</span>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-glow backdrop-blur">
+                <strong class="block text-lg text-white">Folders</strong>
+                <span class="mt-1 block text-sm text-slate-400">Organize your vault entries</span>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-glow backdrop-blur">
+                <strong class="block text-lg text-white">Generator</strong>
+                <span class="mt-1 block text-sm text-slate-400">Strong passwords in one click</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:justify-self-end">
+        <div class="rounded-[2rem] border border-white/10 bg-slate-900/80 p-5 shadow-glow backdrop-blur-xl">
+            <div class="flex items-center gap-2 border-b border-white/10 pb-4 text-sm font-semibold text-white">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.7)]"></span>
+                Secure vault preview
+            </div>
+
+            <div class="mt-4 space-y-3">
+                <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <div>
+                        <strong class="block text-white">GitHub</strong>
+                        <span class="text-sm text-slate-400">dev@example.com</span>
+                    </div>
+                    <span class="font-mono text-slate-300">••••••••••••</span>
+                </div>
+                <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <div>
+                        <strong class="block text-white">Bank Portal</strong>
+                        <span class="text-sm text-slate-400">john.doe</span>
+                    </div>
+                    <span class="font-mono text-slate-300">••••••••••••</span>
+                </div>
+                <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <div>
+                        <strong class="block text-white">Gmail</strong>
+                        <span class="text-sm text-slate-400">primary inbox</span>
+                    </div>
+                    <span class="font-mono text-slate-300">••••••••••••</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="mt-10 grid gap-4 lg:grid-cols-3">
+    <article class="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-glow backdrop-blur">
+        <h2 class="font-display text-xl font-bold text-white">Master password auth</h2>
+        <p class="mt-3 leading-7 text-slate-300">Sign up, log in, and manage sessions with bcrypt-hashed passwords and secure JWT tokens stored in HTTP-only cookies.</p>
+    </article>
+    <article class="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-glow backdrop-blur">
+        <h2 class="font-display text-xl font-bold text-white">Encrypted vault</h2>
+        <p class="mt-3 leading-7 text-slate-300">Every saved password is encrypted at rest with Fernet (AES-128-CBC). Reveal or copy with one click — never stored in plaintext.</p>
+    </article>
+    <article id="security" class="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-glow backdrop-blur">
+        <h2 class="font-display text-xl font-bold text-white">Search & organize</h2>
+        <p class="mt-3 leading-7 text-slate-300">Filter by folders, mark favorites, and search across your vault instantly. Built for speed and clarity.</p>
+    </article>
+</section>
+{% endblock %}

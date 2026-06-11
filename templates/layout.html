@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vaultify{% endblock %}</title>
+    <meta name="description" content="A secure, modern password manager interface ready for login and vault features.">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "ui-sans-serif", "system-ui"],
+                        display: ["Space Grotesk", "Inter", "ui-sans-serif"],
+                    },
+                    boxShadow: {
+                        glow: "0 0 0 1px rgba(148, 163, 184, 0.18), 0 24px 80px rgba(15, 23, 42, 0.55)",
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+    <div class="relative isolate overflow-hidden">
+        <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.18),_transparent_32%),linear-gradient(180deg,_#020617,_#0f172a)]"></div>
+        <div class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+            <header class="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
+                <a href="/" class="flex items-center gap-2.5 group transition-transform hover:scale-[1.02]">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7 text-cyan-400 stroke-current group-hover:text-cyan-300 transition-colors" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <div>
+                        <div class="font-display text-lg font-bold tracking-tight text-white leading-none">Vaultify</div>
+                        <div class="text-xs text-slate-400 mt-1">Password manager</div>
+                    </div>
+                </a>
+                <nav class="flex flex-wrap items-center gap-3 text-sm">
+                    <a class="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition hover:bg-white/10" href="/login">Sign in</a>
+                    <a class="rounded-full bg-cyan-400 px-4 py-2 font-medium text-slate-950 transition hover:bg-cyan-300" href="/signup">Create account</a>
+                </nav>
+            </header>
+
+            <main class="flex-1 py-10 sm:py-14">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>

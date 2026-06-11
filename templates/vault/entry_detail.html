@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.title }} — Vaultify{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+
+    <!-- Breadcrumb -->
+    <div class="mb-5 flex items-center gap-2 text-sm text-slate-500">
+        <a href="/vault/dashboard" class="hover:text-slate-300 transition">Vault</a>
+        <span>/</span>
+        <span class="text-slate-300">{{ entry.title }}</span>
+    </div>
+
+    <!-- Card -->
+    <div class="rounded-2xl border border-white/10 bg-slate-900/80 p-7 shadow-glow backdrop-blur">
+
+        <!-- Title row -->
+        <div class="mb-6 flex items-start justify-between gap-4">
+            <div>
+                <h1 class="font-display text-2xl font-bold text-white">{{ entry.title }}</h1>
+                {% if entry.folder %}
+                <span class="mt-1 inline-block rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400">
+                    {{ entry.folder.icon }} {{ entry.folder.name }}
+                </span>
+                {% endif %}
+            </div>
+            {% if entry.is_favorite %}
+            <span class="text-2xl" title="Favorite">⭐</span>
+            {% endif %}
+        </div>
+
+        <!-- Fields -->
+        <div class="space-y-5">
+
+            <!-- Username -->
+            <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
+                <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Username / Email</p>
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm text-white">{{ entry.username or '—' }}</p>
+                    {% if entry.username %}
+                    <button onclick="copyText('{{ entry.username }}')"
+                            class="shrink-0 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
+                        Copy
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
+                <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Password</p>
+                <div class="flex items-center justify-between gap-3">
+                    <p id="pw-display" class="font-mono text-sm text-white tracking-widest">••••••••••••</p>
+                    <div class="flex shrink-0 gap-2">
+                        <button onclick="revealPassword({{ entry.id }})"
+                                class="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
+                            Reveal
+                        </button>
+                        <button onclick="copyEntryPassword({{ entry.id }})"
+                                class="rounded-lg bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:bg-cyan-500/20 transition">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- URL -->
+            {% if entry.url %}
+            <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
+                <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Website URL</p>
+                <a href="{{ entry.url }}" target="_blank" rel="noopener noreferrer"
+                   class="text-sm text-cyan-400 hover:text-cyan-300 transition break-all">{{ entry.url }} ↗</a>
+            </div>
+            {% endif %}
+
+            <!-- Notes -->
+            {% if entry.notes %}
+            <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
+                <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Notes</p>
+                <p class="whitespace-pre-wrap text-sm text-slate-300">{{ entry.notes }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Metadata -->
+            <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4 text-xs text-slate-500">
+                <p>Added: {{ entry.created_at.strftime('%d %b %Y') }}</p>
+                <p>Updated: {{ entry.updated_at.strftime('%d %b %Y') }}</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 flex flex-wrap gap-3">
+            <a href="/vault/{{ entry.id }}/edit"
+               class="flex-1 min-w-[100px] rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-center text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
+                Edit
+            </a>
+            <form method="POST" action="/vault/{{ entry.id }}/favorite">
+                <button type="submit"
+                        class="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10">
+                    {% if entry.is_favorite %}★ Unfavorite{% else %}☆ Favorite{% endif %}
+                </button>
+            </form>
+            <form method="POST" action="/vault/{{ entry.id }}/delete"
+                  onsubmit="return confirm('Delete {{ entry.title }}? This cannot be undone.')">
+                <button type="submit"
+                        class="rounded-xl border border-red-500/30 bg-red-900/20 px-5 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-900/40">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let revealed = false;
+
+async function revealPassword(id) {
+    const display = document.getElementById('pw-display');
+    if (revealed) {
+        display.textContent = '••••••••••••';
+        revealed = false;
+        return;
+    }
+    try {
+        const r = await fetch(`/vault/api/entries/${id}/password`);
+        const { password } = await r.json();
+        display.textContent = password;
+        revealed = true;
+    } catch { showToast('Could not load password.', true); }
+}
+
+async function copyEntryPassword(id) {
+    try {
+        const r = await fetch(`/vault/api/entries/${id}/password`);
+        const { password } = await r.json();
+        await navigator.clipboard.writeText(password);
+        showToast('Password copied!');
+    } catch { showToast('Copy failed.', true); }
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
+}
+</script>
+{% endblock %}

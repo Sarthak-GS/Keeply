@@ -1,0 +1,26 @@
+pip install "fastapi[standard]"
+
+
+fastapi dev main.py
+
+/redoc
+
+
+
+
+sqlalchemy -> session (a transaction w9ith db for each request.. creae  a database.py that yield bd everytime using ciontext manageer)
+
+
+create a models.py defining db table schemas and relationships using Mapped & mapped_column && adding properties methid
+uppdate schema.py fro create/response
+create media  and mount
+
+
+
+
+
+
+for images handling
+
+create image_utils.py
+create seperae route and use UploadFie
