@@ -17,6 +17,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 logger = logging.getLogger(__name__)
 
 # ── Create all DB tables on startup ───────────────────────────────────────────
+from sqlalchemy import inspect
+inspector = inspect(engine)
+if "users" in inspector.get_table_names():
+    columns = [col["name"] for col in inspector.get_columns("users")]
+    if "encrypted_dek" not in columns:
+        logger.info("Outdated schema detected. Recreating database tables...")
+        Base.metadata.drop_all(bind=engine)
+
 Base.metadata.create_all(bind=engine)
 
 # ── App ───────────────────────────────────────────────────────────────────────

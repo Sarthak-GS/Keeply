@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+import base64
+from fastapi import APIRouter, Depends, Form, Request, HTTPException
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -15,6 +16,16 @@ router = APIRouter(prefix="/vault", tags=["Vault"])
 templates = Jinja2Templates(directory="templates")
 
 
+def get_session_dek(request: Request) -> bytes:
+    dek_b64 = request.session.get("dek")
+    if not dek_b64:
+        raise HTTPException(status_code=401, detail="Session expired")
+    try:
+        return base64.b64decode(dek_b64.encode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session key")
+
+
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @router.get("/dashboard")
 def dashboard(
@@ -25,6 +36,10 @@ def dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Enforce session validity (DEK must exist)
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
+
     flash = request.session.pop("flash", None)
     entries = vault_service.get_all_entries(
         db,
@@ -56,6 +71,8 @@ def new_entry_page(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
     folders = folder_service.get_all_folders(db, current_user.id)
     return templates.TemplateResponse(
         request, "vault/entry_form.html", {"user": current_user, "folders": folders, "entry": None}
@@ -74,6 +91,10 @@ async def create_entry(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
+    dek = get_session_dek(request)
+
     if not title.strip():
         folders = folder_service.get_all_folders(db, current_user.id)
         return templates.TemplateResponse(
@@ -83,10 +104,14 @@ async def create_entry(
              "error": "Title is required."},
         )
     entry_data = VaultEntryCreate(
-        title=title, username=username, password=password,
-        url=url, notes=notes, folder_id=folder_id
+        title=title,
+        username=username,
+        password=password,
+        url=url,
+        notes=notes,
+        folder_id=folder_id,
     )
-    vault_service.create_entry(db, entry_data, current_user.id)
+    vault_service.create_entry(db, entry_data, current_user.id, dek)
     request.session["flash"] = {"message": f'"{title}" saved to vault.', "type": "success"}
     return RedirectResponse(url="/vault/dashboard", status_code=302)
 
@@ -99,6 +124,8 @@ def view_entry(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         request.session["flash"] = {"message": "Entry not found.", "type": "error"}
@@ -116,6 +143,8 @@ def edit_entry_page(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         return RedirectResponse(url="/vault/dashboard", status_code=302)
@@ -138,6 +167,10 @@ async def update_entry(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
+    dek = get_session_dek(request)
+
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         return RedirectResponse(url="/vault/dashboard", status_code=302)
@@ -150,7 +183,7 @@ async def update_entry(
         notes=notes,
         folder_id=folder_id,
     )
-    vault_service.update_entry(db, entry, update_data)
+    vault_service.update_entry(db, entry, update_data, dek)
     request.session["flash"] = {"message": f'"{title}" updated.', "type": "success"}
     return RedirectResponse(url=f"/vault/{entry_id}", status_code=302)
 
@@ -163,6 +196,8 @@ async def delete_entry(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if entry:
         title = entry.title
@@ -175,30 +210,38 @@ async def delete_entry(
 @router.post("/{entry_id}/favorite")
 async def toggle_favorite(
     entry_id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if "dek" not in request.session:
+        return RedirectResponse(url="/logout", status_code=302)
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if entry:
         vault_service.toggle_favorite(db, entry)
     return RedirectResponse(url="/vault/dashboard", status_code=302)
 
 
-# ── API: Get decrypted password (for clipboard copy) ─────────────────────────
-# NOTE: these must be defined BEFORE /{entry_id} so FastAPI matches /api/... first
+# ── API endpoints ─────────────────────────────────────────────────────────────
 @router.get("/api/generate-password")
 def api_generate_password(length: int = 16, symbols: bool = True):
     return {"password": generate_strong_password(length, symbols)}
 
 
 @router.get("/api/entries/{entry_id}/password")
-def get_password(
+def get_entry_password(
     entry_id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from fastapi import HTTPException
+    if "dek" not in request.session:
+        raise HTTPException(status_code=401, detail="Session expired")
+    dek = get_session_dek(request)
+
     entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
-    return {"password": vault_service.get_decrypted_password(entry)}
+
+    plain = vault_service.get_decrypted_password(entry, dek)
+    return {"password": plain}

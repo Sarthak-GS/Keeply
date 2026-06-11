@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from database.session import get_db
 from auth.dependencies import get_current_user
-from auth.hashing import verify_password
 from models.user import User
 from services import auth_service
 
@@ -35,10 +34,6 @@ async def change_password(
     db: Session = Depends(get_db),
 ):
     errors = []
-    if len(current_password) > 72:
-        errors.append("Current password is incorrect.")
-    elif not verify_password(current_password, current_user.hashed_password):
-        errors.append("Current password is incorrect.")
     if len(new_password) < 8:
         errors.append("New password must be at least 8 characters.")
     if len(new_password) > 72:
@@ -53,6 +48,22 @@ async def change_password(
             {"user": current_user, "errors": errors},
         )
 
-    auth_service.update_password(db, current_user, new_password)
-    request.session["flash"] = {"message": "Password changed successfully.", "type": "success"}
-    return RedirectResponse(url="/profile", status_code=302)
+    success = auth_service.update_password(
+        db, current_user, current_password, new_password
+    )
+    if not success:
+        return templates.TemplateResponse(
+            request,
+            "profile/profile.html",
+            {"user": current_user, "errors": ["Current password is incorrect."]},
+        )
+
+    # Force re-login so that the session gets updated with the newly wrapped DEK
+    request.session.clear()
+    request.session["flash"] = {
+        "message": "Password successfully changed. Please log in again.",
+        "type": "success",
+    }
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie("access_token")
+    return response

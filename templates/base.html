@@ -68,6 +68,7 @@
                     {% if user %}{{ user.username }}{% else %}Profile{% endif %}
                 </a>
                 <a href="/logout"
+                   id="logout-link"
                    class="ml-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 hover:text-red-300">
                     Logout
                 </a>
@@ -79,7 +80,7 @@
     {% set flash = flash if flash is defined else none %}
     {% if flash %}
     <div id="flash-banner"
-         class="{% if flash.type == 'success' %}bg-emerald-900/60 border-emerald-500/30 text-emerald-300{% else %}bg-red-900/60 border-red-500/30 text-red-300{% endif %} border-b px-4 py-3 text-center text-sm font-medium backdrop-blur">
+          class="{% if flash.type == 'success' %}bg-emerald-900/60 border-emerald-500/30 text-emerald-300{% else %}bg-red-900/60 border-red-500/30 text-red-300{% endif %} border-b px-4 py-3 text-center text-sm font-medium backdrop-blur">
         {% if flash.type == 'success' %}✅{% else %}⚠️{% endif %}
         {{ flash.message }}
         <button onclick="document.getElementById('flash-banner').remove()"

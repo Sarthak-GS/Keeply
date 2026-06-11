@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 {% block title %}Create Account — Vaultify{% endblock %}
 {% block content %}
+
 <div class="flex min-h-[85vh] items-center justify-center">
     <div class="w-full max-w-md">
-
         <div class="rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-glow backdrop-blur-xl">
 
             <!-- Logo -->
@@ -19,17 +19,15 @@
                 <p class="text-sm text-slate-400">Secure, private, yours.</p>
             </div>
 
-            <!-- Errors -->
+            <!-- Server-side errors (username/email taken etc.) -->
             {% if errors %}
             <div class="mb-4 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300 space-y-1">
-                {% for e in errors %}
-                <div>⚠️ {{ e }}</div>
-                {% endfor %}
+                {% for e in errors %}<div>{{ e }}</div>{% endfor %}
             </div>
             {% endif %}
 
             <!-- Form -->
-            <form method="POST" action="/signup" class="space-y-4">
+            <form id="signup-form" method="POST" action="/signup" class="space-y-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-300">Username</label>
                     <input id="username" name="username" type="text" required
@@ -52,7 +50,7 @@
                                oninput="updateStrength(this.value)"
                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
                         <button type="button" onclick="toggleVisibility('reg-password', this)"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">👁</button>
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white">Show</button>
                     </div>
                     <!-- Strength bar -->
                     <div class="mt-2 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
@@ -66,10 +64,15 @@
                         <input id="confirm-password" name="confirm_password" type="password" required
                                placeholder="••••••••••••"
                                oninput="checkMatch()"
-                               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
-                        <span id="match-icon" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm"></span>
+                               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-28 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+                        <span id="match-icon" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs"></span>
                     </div>
                 </div>
+
+                <!-- Info note -->
+                <p class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-2.5 text-xs text-cyan-300 leading-relaxed">
+                    Your vault is secured using a two-key (KEK and DEK) architecture. The server never stores your master password or raw keys.
+                </p>
 
                 <button type="submit"
                         class="mt-2 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]">
@@ -89,7 +92,7 @@
 function toggleVisibility(id, btn) {
     const el = document.getElementById(id);
     el.type = el.type === 'password' ? 'text' : 'password';
-    btn.textContent = el.type === 'password' ? '👁' : '🙈';
+    btn.textContent = el.type === 'password' ? 'Show' : 'Hide';
 }
 
 function updateStrength(val) {
@@ -102,12 +105,12 @@ function updateStrength(val) {
     const bar = document.getElementById('strength-bar');
     const label = document.getElementById('strength-label');
     const levels = [
-        { pct: '0%', color: 'bg-red-500', text: 'Too short' },
-        { pct: '20%', color: 'bg-red-500', text: 'Very weak' },
-        { pct: '40%', color: 'bg-orange-400', text: 'Weak' },
-        { pct: '60%', color: 'bg-yellow-400', text: 'Fair' },
-        { pct: '80%', color: 'bg-emerald-400', text: 'Strong' },
-        { pct: '100%', color: 'bg-emerald-400', text: 'Very strong' },
+        { pct: '0%',   color: 'bg-red-500',    text: 'Too short' },
+        { pct: '20%',  color: 'bg-red-500',    text: 'Very weak' },
+        { pct: '40%',  color: 'bg-orange-400', text: 'Weak' },
+        { pct: '60%',  color: 'bg-yellow-400', text: 'Fair' },
+        { pct: '80%',  color: 'bg-emerald-400',text: 'Strong' },
+        { pct: '100%', color: 'bg-emerald-400',text: 'Very strong' },
     ];
     const lvl = levels[Math.min(score, 5)];
     bar.style.width = lvl.pct;
@@ -121,7 +124,7 @@ function checkMatch() {
     const icon = document.getElementById('match-icon');
     if (!cp) { icon.textContent = ''; return; }
     icon.textContent = pw === cp ? 'Matches' : 'Does not match';
-    icon.className = pw === cp 
+    icon.className = pw === cp
         ? 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-emerald-400'
         : 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-red-400';
 }
