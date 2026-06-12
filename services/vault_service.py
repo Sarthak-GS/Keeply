@@ -1,11 +1,12 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from models.vault_entry import VaultEntry
 from schemas.vault_entry import VaultEntryCreate, VaultEntryUpdate
 from utils.encryption import encrypt_password, decrypt_password
 from typing import List, Optional
 
 
-def create_entry(db: Session, entry_data: VaultEntryCreate, user_id: int, dek: bytes) -> VaultEntry:
+async def create_entry(db: AsyncSession, entry_data: VaultEntryCreate, user_id: int, dek: bytes) -> VaultEntry:
     encrypted_pw = encrypt_password(entry_data.password, dek)
     entry = VaultEntry(
         title=entry_data.title,
@@ -17,42 +18,42 @@ def create_entry(db: Session, entry_data: VaultEntryCreate, user_id: int, dek: b
         user_id=user_id,
     )
     db.add(entry)
-    db.commit()
-    db.refresh(entry)
+    await db.commit()
+    await db.refresh(entry)
     return entry
 
 
-def get_all_entries(
-    db: Session,
+async def get_all_entries(
+    db: AsyncSession,
     user_id: int,
     search: Optional[str] = None,
     folder_id: Optional[int] = None,
     favorites_only: bool = False,
 ) -> List[VaultEntry]:
-    query = db.query(VaultEntry).filter(VaultEntry.user_id == user_id)
+    stmt = select(VaultEntry).filter(VaultEntry.user_id == user_id)
     if search:
-        query = query.filter(
+        stmt = stmt.filter(
             VaultEntry.title.ilike(f"%{search}%")
             | VaultEntry.username.ilike(f"%{search}%")
             | VaultEntry.url.ilike(f"%{search}%")
         )
     if folder_id is not None:
-        query = query.filter(VaultEntry.folder_id == folder_id)
+        stmt = stmt.filter(VaultEntry.folder_id == folder_id)
     if favorites_only:
-        query = query.filter(VaultEntry.is_favorite == True)
-    return query.order_by(VaultEntry.title).all()
+        stmt = stmt.filter(VaultEntry.is_favorite == True)
+    
+    result = await db.execute(stmt.order_by(VaultEntry.title))
+    return list(result.scalars().all())
 
 
-def get_entry_by_id(db: Session, entry_id: int, user_id: int) -> Optional[VaultEntry]:
-    return (
-        db.query(VaultEntry)
-        .filter(VaultEntry.id == entry_id, VaultEntry.user_id == user_id)
-        .first()
-    )
+async def get_entry_by_id(db: AsyncSession, entry_id: int, user_id: int) -> Optional[VaultEntry]:
+    stmt = select(VaultEntry).filter(VaultEntry.id == entry_id, VaultEntry.user_id == user_id)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 
-def update_entry(
-    db: Session, entry: VaultEntry, entry_data: VaultEntryUpdate, dek: bytes
+async def update_entry(
+    db: AsyncSession, entry: VaultEntry, entry_data: VaultEntryUpdate, dek: bytes
 ) -> VaultEntry:
     if entry_data.title is not None:
         entry.title = entry_data.title
@@ -66,20 +67,20 @@ def update_entry(
         entry.notes = entry_data.notes
     if entry_data.folder_id is not None:
         entry.folder_id = entry_data.folder_id
-    db.commit()
-    db.refresh(entry)
+    await db.commit()
+    await db.refresh(entry)
     return entry
 
 
-def delete_entry(db: Session, entry: VaultEntry) -> None:
-    db.delete(entry)
-    db.commit()
+async def delete_entry(db: AsyncSession, entry: VaultEntry) -> None:
+    await db.delete(entry)
+    await db.commit()
 
 
-def toggle_favorite(db: Session, entry: VaultEntry) -> VaultEntry:
+async def toggle_favorite(db: AsyncSession, entry: VaultEntry) -> VaultEntry:
     entry.is_favorite = not entry.is_favorite
-    db.commit()
-    db.refresh(entry)
+    await db.commit()
+    await db.refresh(entry)
     return entry
 
 

@@ -1,11 +1,11 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from auth.dependencies import get_current_user
-from models.user import User
+from auth.dependencies import CurrentUser
 from services import auth_service
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
@@ -13,10 +13,10 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("")
-def profile_page(
+async def profile_page(
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     flash = request.session.pop("flash", None)
     return templates.TemplateResponse(
@@ -27,11 +27,11 @@ def profile_page(
 @router.post("/change-password")
 async def change_password(
     request: Request,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_password: str = Form(...),
     new_password: str = Form(...),
     confirm_password: str = Form(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     errors = []
     if len(new_password) < 8:
@@ -48,7 +48,7 @@ async def change_password(
             {"user": current_user, "errors": errors},
         )
 
-    success = auth_service.update_password(
+    success = await auth_service.update_password(
         db, current_user, current_password, new_password
     )
     if not success:
@@ -58,12 +58,20 @@ async def change_password(
             {"user": current_user, "errors": ["Current password is incorrect."]},
         )
 
-    # Force re-login so that the session gets updated with the newly wrapped DEK
     request.session.clear()
     request.session["flash"] = {
         "message": "Password successfully changed. Please log in again.",
         "type": "success",
     }
-    response = RedirectResponse(url="/login", status_code=302)
-    response.delete_cookie("access_token")
-    return response
+    return RedirectResponse(url="/login", status_code=302)
+
+
+@router.post("/delete")
+async def delete_account(
+    request: Request,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await auth_service.delete_user(db, current_user)
+    request.session.clear()
+    return RedirectResponse(url="/signup", status_code=302)

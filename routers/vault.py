@@ -1,13 +1,12 @@
 import base64
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
-from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from auth.dependencies import get_current_user
-from models.user import User
+from auth.dependencies import CurrentUser
 from schemas.vault_entry import VaultEntryCreate, VaultEntryUpdate
 from services import vault_service, folder_service
 from utils.password_generator import generate_strong_password
@@ -28,27 +27,27 @@ def get_session_dek(request: Request) -> bytes:
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @router.get("/dashboard")
-def dashboard(
+async def dashboard(
     request: Request,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
     search: Optional[str] = None,
     folder_id: Optional[int] = None,
     favorites: Optional[bool] = None,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     # Enforce session validity (DEK must exist)
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
 
     flash = request.session.pop("flash", None)
-    entries = vault_service.get_all_entries(
+    entries = await vault_service.get_all_entries(
         db,
         current_user.id,
         search=search,
         folder_id=folder_id,
         favorites_only=bool(favorites),
     )
-    folders = folder_service.get_all_folders(db, current_user.id)
+    folders = await folder_service.get_all_folders(db, current_user.id)
     return templates.TemplateResponse(
         request,
         "vault/dashboard.html",
@@ -66,14 +65,14 @@ def dashboard(
 
 # ── New Entry ─────────────────────────────────────────────────────────────────
 @router.get("/new")
-def new_entry_page(
+async def new_entry_page(
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
-    folders = folder_service.get_all_folders(db, current_user.id)
+        return RedirectResponse(url="/login", status_code=302)
+    folders = await folder_service.get_all_folders(db, current_user.id)
     return templates.TemplateResponse(
         request, "vault/entry_form.html", {"user": current_user, "folders": folders, "entry": None}
     )
@@ -82,21 +81,21 @@ def new_entry_page(
 @router.post("/new")
 async def create_entry(
     request: Request,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
     title: str = Form(...),
     username: str = Form(""),
     password: str = Form(...),
     url: str = Form(""),
     notes: str = Form(""),
     folder_id: Optional[int] = Form(None),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     dek = get_session_dek(request)
 
     if not title.strip():
-        folders = folder_service.get_all_folders(db, current_user.id)
+        folders = await folder_service.get_all_folders(db, current_user.id)
         return templates.TemplateResponse(
             request,
             "vault/entry_form.html",
@@ -111,22 +110,22 @@ async def create_entry(
         notes=notes,
         folder_id=folder_id,
     )
-    vault_service.create_entry(db, entry_data, current_user.id, dek)
+    await vault_service.create_entry(db, entry_data, current_user.id, dek)
     request.session["flash"] = {"message": f'"{title}" saved to vault.', "type": "success"}
     return RedirectResponse(url="/vault/dashboard", status_code=302)
 
 
 # ── View Entry ────────────────────────────────────────────────────────────────
 @router.get("/{entry_id}")
-def view_entry(
+async def view_entry(
     entry_id: int,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+        return RedirectResponse(url="/login", status_code=302)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         request.session["flash"] = {"message": "Entry not found.", "type": "error"}
         return RedirectResponse(url="/vault/dashboard", status_code=302)
@@ -137,18 +136,18 @@ def view_entry(
 
 # ── Edit Entry ────────────────────────────────────────────────────────────────
 @router.get("/{entry_id}/edit")
-def edit_entry_page(
+async def edit_entry_page(
     entry_id: int,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+        return RedirectResponse(url="/login", status_code=302)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         return RedirectResponse(url="/vault/dashboard", status_code=302)
-    folders = folder_service.get_all_folders(db, current_user.id)
+    folders = await folder_service.get_all_folders(db, current_user.id)
     return templates.TemplateResponse(
         request, "vault/entry_form.html", {"user": current_user, "entry": entry, "folders": folders}
     )
@@ -158,20 +157,20 @@ def edit_entry_page(
 async def update_entry(
     entry_id: int,
     request: Request,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
     title: str = Form(...),
     username: str = Form(""),
     password: str = Form(""),
     url: str = Form(""),
     notes: str = Form(""),
     folder_id: Optional[int] = Form(None),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     dek = get_session_dek(request)
 
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         return RedirectResponse(url="/vault/dashboard", status_code=302)
 
@@ -183,7 +182,7 @@ async def update_entry(
         notes=notes,
         folder_id=folder_id,
     )
-    vault_service.update_entry(db, entry, update_data, dek)
+    await vault_service.update_entry(db, entry, update_data, dek)
     request.session["flash"] = {"message": f'"{title}" updated.', "type": "success"}
     return RedirectResponse(url=f"/vault/{entry_id}", status_code=302)
 
@@ -193,15 +192,15 @@ async def update_entry(
 async def delete_entry(
     entry_id: int,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+        return RedirectResponse(url="/login", status_code=302)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if entry:
         title = entry.title
-        vault_service.delete_entry(db, entry)
+        await vault_service.delete_entry(db, entry)
         request.session["flash"] = {"message": f'"{title}" deleted.', "type": "success"}
     return RedirectResponse(url="/vault/dashboard", status_code=302)
 
@@ -211,14 +210,14 @@ async def delete_entry(
 async def toggle_favorite(
     entry_id: int,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
-        return RedirectResponse(url="/logout", status_code=302)
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+        return RedirectResponse(url="/login", status_code=302)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if entry:
-        vault_service.toggle_favorite(db, entry)
+        await vault_service.toggle_favorite(db, entry)
     return RedirectResponse(url="/vault/dashboard", status_code=302)
 
 
@@ -229,17 +228,17 @@ def api_generate_password(length: int = 16, symbols: bool = True):
 
 
 @router.get("/api/entries/{entry_id}/password")
-def get_entry_password(
+async def get_entry_password(
     entry_id: int,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if "dek" not in request.session:
         raise HTTPException(status_code=401, detail="Session expired")
     dek = get_session_dek(request)
 
-    entry = vault_service.get_entry_by_id(db, entry_id, current_user.id)
+    entry = await vault_service.get_entry_by_id(db, entry_id, current_user.id)
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
 

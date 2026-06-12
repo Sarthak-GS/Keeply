@@ -1,11 +1,12 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from models.user import User
 from schemas.user import UserCreate
 from auth.hashing import hash_password, verify_password
 from utils.encryption import derive_kek, generate_dek, encrypt_dek, decrypt_dek
 
 
-def create_user(db: Session, user_data: UserCreate) -> User:
+async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
     # Hash password for login verification
     hashed_pw = hash_password(user_data.password)
     
@@ -21,13 +22,13 @@ def create_user(db: Session, user_data: UserCreate) -> User:
         encrypted_dek=encrypted_dek,
     )
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return new_user
 
 
-def authenticate_user(db: Session, email: str, password: str) -> tuple[User, bytes] | None:
-    user = db.query(User).filter(User.email == email).first()
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> tuple[User, bytes] | None:
+    user = await get_user_by_email(db, email)
     if not user or not verify_password(password, user.hashed_password):
         return None
     
@@ -41,15 +42,19 @@ def authenticate_user(db: Session, email: str, password: str) -> tuple[User, byt
     return user, dek
 
 
-def get_user_by_email(db: Session, email: str) -> User | None:
-    return db.query(User).filter(User.email == email).first()
+async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+    stmt = select(User).filter(User.email == email)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 
-def get_user_by_username(db: Session, username: str) -> User | None:
-    return db.query(User).filter(User.username == username).first()
+async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
+    stmt = select(User).filter(User.username == username)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 
-def update_password(db: Session, user: User, current_password: str, new_password: str) -> bool:
+async def update_password(db: AsyncSession, user: User, current_password: str, new_password: str) -> bool:
     # Verify current password and decrypt DEK
     old_kek = derive_kek(current_password)
     try:
@@ -64,6 +69,11 @@ def update_password(db: Session, user: User, current_password: str, new_password
     # Update user master password hash and new encrypted DEK
     user.hashed_password = hash_password(new_password)
     user.encrypted_dek = new_encrypted_dek
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return True
+
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    await db.delete(user)
+    await db.commit()

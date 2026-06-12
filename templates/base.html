@@ -67,11 +67,11 @@
                    class="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white">
                     {% if user %}{{ user.username }}{% else %}Profile{% endif %}
                 </a>
-                <a href="/logout"
+                <button onclick="handleLogout()"
                    id="logout-link"
-                   class="ml-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 hover:text-red-300">
+                   class="ml-2 cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 hover:text-red-300">
                     Logout
-                </a>
+                </button>
             </div>
         </div>
     </nav>
@@ -99,6 +99,7 @@
     </main>
 
     <script src="/static/js/main.js"></script>
+    <script src="/static/js/auth_finished.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

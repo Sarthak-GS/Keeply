@@ -23,3 +23,9 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     email: Optional[str] = None
     username: Optional[str] = None
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+

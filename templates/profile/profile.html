@@ -56,5 +56,19 @@
             </button>
         </form>
     </div>
+
+    <!-- Danger zone card -->
+    <div class="mt-6 rounded-2xl border border-red-500/20 bg-red-950/20 p-6 backdrop-blur">
+        <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-red-400">Danger Zone</h2>
+        <p class="mb-4 text-xs text-slate-400 leading-relaxed">
+            Once you delete your account, your entire vault will be permanently deleted and cannot be recovered.
+        </p>
+        <form method="POST" action="/profile/delete" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This action is permanent.');">
+            <button type="submit"
+                    class="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20">
+                Delete Account
+            </button>
+        </form>
+    </div>
 </div>
 {% endblock %}

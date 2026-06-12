@@ -1,26 +1,30 @@
+from typing import Annotated
 from fastapi import Request, Depends, HTTPException
-from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from database.session import get_db
 from models.user import User
 from auth.jwt_handler import decode_token
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token", auto_error=False)
 
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    """
-    FastAPI dependency that reads the JWT from an HTTP-only cookie,
-    validates it, and returns the current User object.
-    Redirects to /login on any auth failure.
-    """
-    token = request.cookies.get("access_token")
-    if not token:
+
+async def get_current_user(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    # Look for token in Authorization header or in secure server-side session
+    actual_token = token or request.session.get("access_token")
+    if not actual_token:
         raise HTTPException(
             status_code=307,
             headers={"Location": "/login"},
             detail="Not authenticated",
         )
 
-    payload = decode_token(token)
+    payload = decode_token(actual_token)
     if payload is None:
         raise HTTPException(
             status_code=307,
@@ -32,22 +36,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     if user_id is None:
         raise HTTPException(status_code=307, headers={"Location": "/login"})
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    stmt = select(User).filter(User.id == int(user_id))
+    result = await db.execute(stmt)
+    user = result.scalars().first()
     if not user or not user.is_active:
         raise HTTPException(status_code=307, headers={"Location": "/login"})
 
     return user
 
 
-def get_optional_user(request: Request, db: Session = Depends(get_db)) -> User | None:
-    """Returns the current user if authenticated, else None (for public pages)."""
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-    payload = decode_token(token)
-    if not payload:
-        return None
-    user_id = payload.get("sub")
-    if not user_id:
-        return None
-    return db.query(User).filter(User.id == int(user_id)).first()
+# Dependency alias using typing.Annotated for clean injection
+CurrentUser = Annotated[User, Depends(get_current_user)]

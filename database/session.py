@@ -1,20 +1,22 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from config.settings import settings
 
-# SQLite needs check_same_thread=False; for PostgreSQL remove connect_args
+url = settings.DATABASE_URL
+if url.startswith("sqlite://"):
+    url = url.replace("sqlite://", "sqlite+aiosqlite://")
+
 connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
+if "sqlite" in url:
     connect_args = {"check_same_thread": False}
 
-engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(url, connect_args=connect_args)
+SessionLocal = async_sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
-def get_db():
-    """FastAPI dependency that provides a DB session per request."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db():
+    """FastAPI async dependency that yields a DB session per request."""
+    async with SessionLocal() as db:
+        try:
+            yield db
+        finally:
+            await db.close()
