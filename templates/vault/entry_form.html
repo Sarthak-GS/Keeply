@@ -159,7 +159,12 @@ function closeGenerator() { document.getElementById('gen-modal').classList.add('
 async function generateAndFill() {
     const len = document.getElementById('gen-length').value;
     const sym = document.getElementById('gen-symbols').checked;
-    const r = await fetch(`/vault/api/generate-password?length=${len}&symbols=${sym}`);
+    const token = localStorage.getItem("access_token");
+    const r = await fetch(`/vault/api/generate-password?length=${len}&symbols=${sym}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
     const { password } = await r.json();
     document.getElementById('gen-output').textContent = password;
     document.getElementById('gen-output').dataset.pw = password;
@@ -174,5 +179,46 @@ function usePassword() {
     closeGenerator();
     showToast('Password applied!');
 }
+
+// Intercept form submit
+document.querySelector('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // Construct JSON object from form data
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert folder_id to number or null
+    if (data.folder_id === "" || !data.folder_id) {
+        data.folder_id = null;
+    } else {
+        data.folder_id = parseInt(data.folder_id, 10);
+    }
+
+    const action = form.getAttribute('action');
+    try {
+        const token = localStorage.getItem("access_token");
+        const dek = localStorage.getItem("vault_dek");
+        const response = await fetch(action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'X-Vault-Key': dek || ''
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            showToast(result.detail || result.message || 'An error occurred', true);
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
+    }
+});
 </script>
 {% endblock %}

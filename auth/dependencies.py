@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Request, Depends, HTTPException
+from fastapi import Request, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,32 +15,39 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    # Look for token in Authorization header or in secure server-side session
-    actual_token = token or request.session.get("access_token")
+    """
+    Authenticate user from:
+      1. Authorization: Bearer <token> header  → JS fetch() calls
+      2. access_token cookie                   → browser page navigation
+
+    NOTE: This uses request.cookies (plain HTTP cookie reading),
+    NOT request.session (no SessionMiddleware needed).
+    """
+    actual_token = token or request.cookies.get("access_token")
     if not actual_token:
         raise HTTPException(
-            status_code=307,
-            headers={"Location": "/login"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     payload = decode_token(actual_token)
     if payload is None:
         raise HTTPException(
-            status_code=307,
-            headers={"Location": "/login"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     user_id = payload.get("sub")
     if user_id is None:
-        raise HTTPException(status_code=307, headers={"Location": "/login"})
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     stmt = select(User).filter(User.id == int(user_id))
     result = await db.execute(stmt)
     user = result.scalars().first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=307, headers={"Location": "/login"})
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     return user
 

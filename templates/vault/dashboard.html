@@ -52,11 +52,11 @@
         <div class="group relative flex flex-col rounded-2xl border border-white/8 bg-slate-900/70 p-5 backdrop-blur transition hover:border-cyan-500/30 hover:shadow-[0_0_24px_rgba(103,213,255,0.12)]">
 
             <!-- Favorite star -->
-            <form method="POST" action="/vault/{{ entry.id }}/favorite" class="absolute right-4 top-4">
-                <button type="submit" class="text-lg transition hover:scale-125" title="Toggle favorite">
+            <div class="absolute right-4 top-4">
+                <button onclick="toggleFavorite({{ entry.id }}, this)" class="text-lg transition hover:scale-125" title="Toggle favorite">
                     {% if entry.is_favorite %}<span class="text-yellow-400 shadow-glow-yellow">★</span>{% else %}<span class="opacity-40 hover:opacity-80 text-slate-300 hover:text-yellow-400 transition-colors">☆</span>{% endif %}
                 </button>
-            </form>
+            </div>
 
             <!-- Title + folder -->
             <div class="mb-3 pr-8">
@@ -118,7 +118,14 @@
 async function copyEntryPassword(id, btn) {
     const orig = btn.innerHTML;
     try {
-        const r = await fetch(`/vault/api/entries/${id}/password`);
+        const token = localStorage.getItem("access_token");
+        const dek = localStorage.getItem("vault_dek");
+        const r = await fetch(`/vault/api/entries/${id}/password`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'X-Vault-Key': dek || ''
+            }
+        });
         if (!r.ok) throw new Error('Not found');
         const { password } = await r.json();
         await navigator.clipboard.writeText(password);
@@ -130,6 +137,26 @@ async function copyEntryPassword(id, btn) {
         showToast('Copy failed — check browser permissions.', true);
     } finally {
         setTimeout(() => { btn.innerHTML = orig; btn.className = btn.className.replace('text-emerald-400 bg-emerald-500/10', 'text-cyan-400 bg-cyan-500/10'); }, 2000);
+    }
+}
+
+async function toggleFavorite(id, btn) {
+    try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch(`/vault/${id}/favorite`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            // Simply reload the dashboard page to get updated list
+            window.location.reload();
+        } else {
+            showToast('Failed to toggle favorite.', true);
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
     }
 }
 </script>

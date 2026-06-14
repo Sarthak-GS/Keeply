@@ -26,14 +26,10 @@
                 ✅ {{ flash.message }}
             </div>
             {% endif %}
-            {% if error %}
-            <div class="mb-4 rounded-xl border border-red-500/30 bg-red-900/30 px-4 py-3 text-sm text-red-300">
-                ⚠️ {{ error }}
-            </div>
-            {% endif %}
+            <div id="error-box" class="mb-4 rounded-xl border border-red-500/30 bg-red-900/30 px-4 py-3 text-sm text-red-300 hidden"></div>
 
             <!-- Form -->
-            <form method="POST" action="/login" class="space-y-4">
+            <form id="login-form" class="space-y-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-300">Email</label>
                     <input id="email" name="email" type="email" required autocomplete="email"
@@ -41,7 +37,10 @@
                            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
                 </div>
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium text-slate-300">Master Password</label>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-sm font-medium text-slate-300">Master Password</label>
+                        <a href="/forgot-password" class="text-xs text-cyan-400 hover:text-cyan-300 transition">Forgot password?</a>
+                    </div>
                     <div class="relative">
                         <input id="password" name="password" type="password" required autocomplete="current-password"
                                placeholder="••••••••••••"
@@ -51,8 +50,8 @@
                     </div>
                 </div>
 
-                <button type="submit"
-                        class="mt-2 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]">
+                <button id="login-btn" type="submit"
+                        class="mt-2 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
                     Sign In
                 </button>
             </form>
@@ -65,11 +64,35 @@
     </div>
 </div>
 
+<script src="/static/js/auth_finished.js"></script>
 <script>
 function toggleVisibility(id, btn) {
     const el = document.getElementById(id);
     el.type = el.type === 'password' ? 'text' : 'password';
     btn.textContent = el.type === 'password' ? '👁' : '🙈';
 }
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById('error-box');
+    const btn = document.getElementById('login-btn');
+    errorBox.classList.add('hidden');
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+
+    try {
+        await handleLogin(email, password);
+        window.location.href = '/vault/dashboard';
+    } catch (err) {
+        errorBox.textContent = '⚠️ ' + err.message;
+        errorBox.classList.remove('hidden');
+        btn.textContent = 'Sign In';
+        btn.disabled = false;
+    }
+});
 </script>
 {% endblock %}

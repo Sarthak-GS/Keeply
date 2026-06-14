@@ -7,8 +7,16 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # SMTP Configuration for Password Reset Email
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "no-reply@vaultify.com"
+    SMTP_USE_TLS: bool = True
+
     class Config:
-        env_file = ".env"   
+        env_file = ".env"
         extra = "ignore"
 
 

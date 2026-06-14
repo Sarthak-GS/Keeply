@@ -1,7 +1,11 @@
 /**
  * Vaultify — main.js
- * Global JS utilities: toast notifications, copy helpers.
+ * Global JS utilities: toast notifications, copy helpers, and auth fetch interceptor.
+ * Token + DEK are managed by auth_finished.js (loaded after this file).
  */
+
+// Fetch interceptor removed. Authorization and encryption keys are now passed explicitly in individual template requests.
+
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(message, isError = false) {
@@ -23,7 +27,7 @@ function showToast(message, isError = false) {
     toast._timer = setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(8px)';
-    }, 3000);
+    }, 3500);
 }
 
 // ── Generic clipboard copy ────────────────────────────────────────────────────

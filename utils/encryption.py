@@ -1,4 +1,5 @@
 import os
+import hashlib
 import base64
 from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -37,6 +38,29 @@ def decrypt_dek(encrypted_dek: str, kek: bytes) -> bytes:
     return aesgcm.decrypt(nonce, ciphertext, None)
 
 
+def _server_key(secret: str) -> bytes:
+    """Derive a 32-byte AES key from the app SECRET_KEY using SHA-256."""
+    return hashlib.sha256(secret.encode("utf-8")).digest()
+
+
+def encrypt_dek_with_secret(dek: bytes, secret: str) -> str:
+    """Encrypt the DEK using the app SECRET_KEY for server-side recovery."""
+    key = _server_key(secret)
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)
+    ciphertext = aesgcm.encrypt(nonce, dek, None)
+    return base64.b64encode(nonce + ciphertext).decode("utf-8")
+
+
+def decrypt_dek_with_secret(encrypted: str, secret: str) -> bytes:
+    """Decrypt the DEK using the app SECRET_KEY (used during password reset)."""
+    key = _server_key(secret)
+    combined = base64.b64decode(encrypted.encode("utf-8"))
+    nonce, ciphertext = combined[:12], combined[12:]
+    aesgcm = AESGCM(key)
+    return aesgcm.decrypt(nonce, ciphertext, None)
+
+
 def encrypt_password(plain: str, dek: bytes) -> str:
     aesgcm = AESGCM(dek)
     nonce = os.urandom(12)
@@ -51,3 +75,4 @@ def decrypt_password(encrypted: str, dek: bytes) -> str:
     ciphertext = combined[12:]
     aesgcm = AESGCM(dek)
     return aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
+

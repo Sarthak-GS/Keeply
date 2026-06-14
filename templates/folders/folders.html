@@ -15,15 +15,15 @@
     <!-- Create folder form -->
     <div class="rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur">
         <h2 class="mb-4 text-sm font-semibold text-slate-300 uppercase tracking-wider">New Folder</h2>
-        <form method="POST" action="/folders/new" class="flex flex-wrap gap-3">
-            <select name="icon"
+        <form id="create-folder-form" class="flex flex-wrap gap-3">
+            <select id="folder-icon" name="icon"
                     class="rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-lg outline-none focus:border-cyan-500/50">
                 <option>📁</option><option>💼</option><option>🏠</option>
                 <option>💳</option><option>📧</option><option>🎮</option>
                 <option>🛒</option><option>🏥</option><option>📚</option>
                 <option>🔧</option><option>🌐</option><option>⭐</option>
             </select>
-            <input name="name" type="text" required placeholder="Folder name…"
+            <input id="folder-name" name="name" type="text" required placeholder="Folder name…"
                    class="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
             <button type="submit"
                     class="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
@@ -44,13 +44,10 @@
                     <p class="text-xs text-slate-500">{{ folder.vault_entries|length }} item{{ 's' if folder.vault_entries|length != 1 }}</p>
                 </div>
             </a>
-            <form method="POST" action="/folders/{{ folder.id }}/delete"
-                  onsubmit="return confirm('Delete folder {{ folder.name }}? Entries will not be deleted.')">
-                <button type="submit"
-                        class="ml-3 rounded-lg px-2 py-1.5 text-xs text-slate-500 opacity-0 transition hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100">
-                    🗑
-                </button>
-            </form>
+            <button onclick="deleteFolder({{ folder.id }}, '{{ folder.name }}')"
+                    class="ml-3 rounded-lg px-2 py-1.5 text-xs text-slate-500 opacity-0 transition hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100">
+                🗑
+            </button>
         </div>
         {% endfor %}
     </div>
@@ -62,4 +59,55 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('create-folder-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('folder-name').value;
+    const icon = document.getElementById('folder-icon').value;
+
+    try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch('/folders/new', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ name, icon })
+        });
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            showToast(result.detail || 'Failed to create folder.', true);
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
+    }
+});
+
+async function deleteFolder(id, name) {
+    if (!confirm(`Delete folder "${name}"? Entries will not be deleted.`)) return;
+    try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch(`/folders/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            showToast(result.detail || 'Failed to delete folder.', true);
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
+    }
+}
+</script>
 {% endblock %}

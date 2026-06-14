@@ -28,26 +28,22 @@
     <div class="rounded-2xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur">
         <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Change Master Password</h2>
 
-        {% if errors %}
-        <div class="mb-4 space-y-1 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300">
-            {% for e in errors %}<div>⚠️ {{ e }}</div>{% endfor %}
-        </div>
-        {% endif %}
+        <div id="error-box" class="mb-4 space-y-1 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300 hidden"></div>
 
-        <form method="POST" action="/profile/change-password" class="space-y-4">
+        <form id="change-password-form" class="space-y-4">
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-slate-300">Current Password</label>
-                <input name="current_password" type="password" required
+                <input id="current_password" name="current_password" type="password" required
                        class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-slate-300">New Password</label>
-                <input name="new_password" type="password" required
+                <input id="new_password" name="new_password" type="password" required
                        class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-slate-300">Confirm New Password</label>
-                <input name="confirm_password" type="password" required
+                <input id="confirm_password" name="confirm_password" type="password" required
                        class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
             </div>
             <button type="submit"
@@ -63,12 +59,72 @@
         <p class="mb-4 text-xs text-slate-400 leading-relaxed">
             Once you delete your account, your entire vault will be permanently deleted and cannot be recovered.
         </p>
-        <form method="POST" action="/profile/delete" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This action is permanent.');">
-            <button type="submit"
-                    class="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20">
-                Delete Account
-            </button>
-        </form>
+        <button onclick="deleteAccount()"
+                class="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20">
+            Delete Account
+        </button>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById('error-box');
+    errorBox.classList.add('hidden');
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch('/profile/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Success: clear local storage tokens & redirect
+            clearToken();
+            clearDek();
+            window.location.href = `${result.redirect}?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            errorBox.textContent = '⚠️ ' + (result.detail || 'Failed to update password.');
+            errorBox.classList.remove('hidden');
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
+    }
+});
+
+async function deleteAccount() {
+    if (!confirm('Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.')) return;
+    try {
+        const token = localStorage.getItem("access_token");
+        const response = await fetch('/profile/delete', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const result = await response.json();
+        if (response.ok) {
+            clearToken();
+            clearDek();
+            window.location.href = `${result.redirect}?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            showToast(result.detail || 'Failed to delete account.', true);
+        }
+    } catch (err) {
+        showToast('Network error, please try again.', true);
+    }
+}
+</script>
 {% endblock %}
