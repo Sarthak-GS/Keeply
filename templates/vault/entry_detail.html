@@ -120,11 +120,9 @@ async function revealPassword(id) {
     }
     try {
         const token = localStorage.getItem("access_token");
-        const dek = localStorage.getItem("vault_dek");
         const r = await fetch(`/vault/api/entries/${id}/password`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'X-Vault-Key': dek || ''
+                'Authorization': `Bearer ${token}`
             }
         });
         const { password } = await r.json();
@@ -136,11 +134,9 @@ async function revealPassword(id) {
 async function copyEntryPassword(id) {
     try {
         const token = localStorage.getItem("access_token");
-        const dek = localStorage.getItem("vault_dek");
         const r = await fetch(`/vault/api/entries/${id}/password`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'X-Vault-Key': dek || ''
+                'Authorization': `Bearer ${token}`
             }
         });
         const { password } = await r.json();

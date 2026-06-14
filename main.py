@@ -26,30 +26,20 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         def check_and_create(sync_conn):
-            from sqlalchemy import inspect, text as sa_text
+            from sqlalchemy import inspect
             inspector = inspect(sync_conn)
             tables = inspector.get_table_names()
 
             if "users" in tables:
                 columns = [col["name"] for col in inspector.get_columns("users")]
-                if "encrypted_dek" not in columns:
-                    Base.metadata.drop_all(bind=sync_conn)
-                elif "server_encrypted_dek" not in columns:
-                    # Non-destructive migration: add the new column
-                    sync_conn.execute(sa_text(
-                        "ALTER TABLE users ADD COLUMN server_encrypted_dek TEXT"
-                    ))
-
-            if "password_reset_tokens" in tables:
-                columns = [col["name"] for col in inspector.get_columns("password_reset_tokens")]
-                if "token_hash" not in columns:
+                # If deprecated columns exist, recreate database for a clean start
+                if "encrypted_dek" in columns or "server_encrypted_dek" in columns:
                     Base.metadata.drop_all(bind=sync_conn)
 
             Base.metadata.create_all(bind=sync_conn)
 
         await conn.run_sync(check_and_create)
     yield
-
 
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -75,8 +65,6 @@ async def health(db: Annotated[AsyncSession, Depends(get_db)]):
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Database connection is down")
-
-
 # ── Helper: detect if request expects JSON or HTML ────────────────────────────
 def _wants_json(request: Request) -> bool:
     accept = request.headers.get("accept", "")
@@ -84,8 +72,7 @@ def _wants_json(request: Request) -> bool:
         return True
     if request.url.path.startswith("/api/") or request.url.path == "/token":
         return True
-    # If the request contains auth headers, it is a JS fetch API call
-    if "authorization" in request.headers or "x-vault-key" in request.headers:
+    if "authorization" in request.headers:
         return True
     return False
 

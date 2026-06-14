@@ -199,13 +199,11 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     const action = form.getAttribute('action');
     try {
         const token = localStorage.getItem("access_token");
-        const dek = localStorage.getItem("vault_dek");
         const response = await fetch(action, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'X-Vault-Key': dek || ''
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(data)
         });

@@ -16,3 +16,6 @@ app.log
 *.egg-info/
 dist/
 build/
+
+
+*.md

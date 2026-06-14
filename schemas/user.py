@@ -29,7 +29,6 @@ class UserUpdate(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    dek: Optional[str] = None
 
 
 class PasswordResetRequest(BaseModel):

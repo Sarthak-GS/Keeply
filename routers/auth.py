@@ -88,15 +88,13 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    auth_result = await auth_service.authenticate_user(db, form_data.username, form_data.password)
-    if not auth_result:
+    user = await auth_service.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    user, dek = auth_result
     token = create_access_token(data={"sub": str(user.id)})
     return {
         "access_token": token,
         "token_type": "bearer",
-        "dek": base64.b64encode(dek).decode("utf-8"),
     }
 
 
