@@ -17,6 +17,8 @@ app.log
 dist/
 build/
 
-
 *.md
 !README.md 
+
+*.txt
+fun/
