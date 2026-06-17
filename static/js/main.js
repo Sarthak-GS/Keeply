@@ -1,18 +1,8 @@
-/**
- * Vaultify — main.js
- * Global JS utilities: toast notifications, copy helpers, and auth fetch interceptor.
- * Token + DEK are managed by auth_finished.js (loaded after this file).
- */
-
-// Fetch interceptor removed. Authorization and encryption keys are now passed explicitly in individual template requests.
-
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
-    toast.textContent = (isError ? '⚠️ ' : '✅ ') + message;
+    toast.textContent = (isError ? '⚠️ ' : '') + message;
     toast.className = [
         'fixed bottom-6 right-6 z-50 rounded-xl border px-5 py-3 text-sm font-medium shadow-glow backdrop-blur transition-all duration-300',
         isError
@@ -30,14 +20,12 @@ function showToast(message, isError = false) {
     }, 3500);
 }
 
-// ── Generic clipboard copy ────────────────────────────────────────────────────
 function copyToClipboard(text, label = 'Copied') {
     navigator.clipboard.writeText(text)
         .then(() => showToast(`${label}!`))
         .catch(() => showToast('Copy failed — check browser permissions.', true));
 }
 
-// ── Auto-dismiss flash banner ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     const banner = document.getElementById('flash-banner');
     if (banner) {

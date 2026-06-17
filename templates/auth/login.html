@@ -23,7 +23,7 @@
             <!-- Flash / Error -->
             {% if flash %}
             <div class="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-900/30 px-4 py-3 text-sm text-emerald-300">
-                ✅ {{ flash.message }}
+                {{ flash.message }}
             </div>
             {% endif %}
             <div id="error-box" class="mb-4 rounded-xl border border-red-500/30 bg-red-900/30 px-4 py-3 text-sm text-red-300 hidden"></div>
