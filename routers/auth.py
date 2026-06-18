@@ -178,8 +178,6 @@ async def process_reset_password(
     data: PasswordResetConfirm,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    if data.password != data.confirm_password:
-        raise HTTPException(status_code=400, detail="Passwords do not match.")
 
     # Validate token
     reset_token = await auth_service.get_valid_reset_token(db, data.token)

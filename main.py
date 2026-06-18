@@ -30,11 +30,11 @@ async def lifespan(app: FastAPI):
             inspector = inspect(sync_conn)
             tables = inspector.get_table_names()
 
-            if "users" in tables:
-                columns = [col["name"] for col in inspector.get_columns("users")]
-                # If deprecated columns exist, recreate database for a clean start
-                if "encrypted_dek" in columns or "server_encrypted_dek" in columns:
-                    Base.metadata.drop_all(bind=sync_conn)
+            # if "users" in tables:
+            #     columns = [col["name"] for col in inspector.get_columns("users")]
+            #     # If deprecated columns exist, recreate database for a clean start
+            #     if "encrypted_dek" in columns or "server_encrypted_dek" in columns:
+            #         Base.metadata.drop_all(bind=sync_conn)
 
             Base.metadata.create_all(bind=sync_conn)
 

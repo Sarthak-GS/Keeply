@@ -16,34 +16,7 @@
         </a>
     </div>
 
-    <!-- Search + filter bar -->
-    <form method="GET" action="/vault/dashboard" class="flex flex-wrap gap-3">
-        <div class="relative flex-1 min-w-[200px]">
-            <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input type="text" name="search" value="{{ search }}"
-                   placeholder="Search by title, username, or URL…"
-                   class="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
-        </div>
-        <select name="folder_id"
-                class="rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-slate-300 outline-none focus:border-cyan-500/50">
-            <option value="">All Folders</option>
-            {% for f in folders %}
-            <option value="{{ f.id }}" {% if active_folder == f.id %}selected{% endif %}>{{ f.icon }} {{ f.name }}</option>
-            {% endfor %}
-        </select>
-        <label class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-300 cursor-pointer hover:bg-white/8 transition">
-            <input type="checkbox" name="favorites" value="1" {% if favorites %}checked{% endif %} class="accent-cyan-400">
-            ★ Favorites only
-        </label>
-        <button type="submit"
-                class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 transition">
-            Filter
-        </button>
-        {% if search or active_folder or favorites %}
-        <a href="/vault/dashboard"
-           class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-400 hover:text-white transition">✕ Clear</a>
-        {% endif %}
-    </form>
+
 
     <!-- Entry cards grid -->
     {% if entries %}

@@ -33,16 +33,7 @@ async def change_password(
     data: PasswordChangeRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    errors = []
-    if len(data.new_password) < 8:
-        errors.append("New password must be at least 8 characters.")
-    if len(data.new_password) > 72:
-        errors.append("New password cannot be longer than 72 characters.")
-    if data.new_password != data.confirm_password:
-        errors.append("New passwords do not match.")
 
-    if errors:
-        raise HTTPException(status_code=400, detail="; ".join(errors))
 
     success = await auth_service.update_password(
         db, current_user, data.current_password, data.new_password

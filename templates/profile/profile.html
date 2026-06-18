@@ -91,10 +91,9 @@ document.getElementById('change-password-form').addEventListener('submit', async
         const result = await response.json();
         
         if (response.ok) {
-            // Success: clear local storage tokens & redirect
-            clearToken();
-            clearDek();
-            window.location.href = `${result.redirect}?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("dek");
+            window.location.href = '/login?msg=' + encodeURIComponent(result.message || 'Password updated.') + '&msg_type=success';
         } else {
             errorBox.textContent = '⚠️ ' + (result.detail || 'Failed to update password.');
             errorBox.classList.remove('hidden');
@@ -110,15 +109,13 @@ async function deleteAccount() {
         const token = localStorage.getItem("access_token");
         const response = await fetch('/profile/delete', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         const result = await response.json();
         if (response.ok) {
-            clearToken();
-            clearDek();
-            window.location.href = `${result.redirect}?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("dek");
+            window.location.href = '/login?msg=' + encodeURIComponent(result.message || 'Account deleted.') + '&msg_type=success';
         } else {
             showToast(result.detail || 'Failed to delete account.', true);
         }
