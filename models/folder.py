@@ -11,7 +11,7 @@ class Folder(Base):
     name = Column(String(100), nullable=False)
     icon = Column(String(10), default="📁")
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     owner = relationship("User", back_populates="folders")
     vault_entries = relationship("VaultEntry", back_populates="folder")

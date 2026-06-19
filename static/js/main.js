@@ -26,6 +26,25 @@ function copyToClipboard(text, label = 'Copied') {
         .catch(() => showToast('Copy failed — check browser permissions.', true));
 }
 
+/**
+ * Prevent double-submit on any button.
+ * Usage: const release = guardButton(btn); ... release();
+ * While guarded, the button is disabled and shows a spinner.
+ */
+function guardButton(btn) {
+    if (!btn || btn.disabled) return null;
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Wait…';
+    btn.classList.add('opacity-60', 'pointer-events-none');
+
+    return function release() {
+        btn.disabled = false;
+        btn.innerHTML = original;
+        btn.classList.remove('opacity-60', 'pointer-events-none');
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const banner = document.getElementById('flash-banner');
     if (banner) {

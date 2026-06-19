@@ -63,19 +63,26 @@
 
 {% block scripts %}
 <script>
+let isCreating = false;
 document.getElementById('create-folder-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isCreating) return;
+
     const name = document.getElementById('folder-name').value;
     const icon = document.getElementById('folder-icon').value;
 
+    isCreating = true;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const origText = submitBtn.innerText;
+    submitBtn.innerText = "Creating...";
+    submitBtn.disabled = true;
+
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch('/folders/new', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: authHeaders({
+                'Content-Type': 'application/json'
+            }),
             body: JSON.stringify({ name, icon })
         });
         const result = await response.json();
@@ -83,30 +90,38 @@ document.getElementById('create-folder-form').addEventListener('submit', async (
             window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
         } else {
             showToast(result.detail || 'Failed to create folder.', true);
+            submitBtn.disabled = false;
+            submitBtn.innerText = origText;
+            isCreating = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        submitBtn.disabled = false;
+        submitBtn.innerText = origText;
+        isCreating = false;
     }
 });
 
+let isDeleting = false;
 async function deleteFolder(id, name) {
     if (!confirm(`Delete folder "${name}"? Entries will not be deleted.`)) return;
+    if (isDeleting) return;
+    isDeleting = true;
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch(`/folders/${id}/delete`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: authHeaders()
         });
         const result = await response.json();
         if (response.ok) {
             window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
         } else {
             showToast(result.detail || 'Failed to delete folder.', true);
+            isDeleting = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        isDeleting = false;
     }
 }
 </script>

@@ -55,7 +55,7 @@ async def update_entry(
         entry.title = entry_data.title
     if entry_data.username is not None:
         entry.username = entry_data.username
-    if entry_data.password is not None:
+    if entry_data.password is not None and entry_data.password.strip() != "":
         entry.encrypted_password = encrypt_password(entry_data.password)
     if entry_data.url is not None:
         entry.url = entry_data.url

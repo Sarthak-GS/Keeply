@@ -149,43 +149,47 @@ function copyText(text) {
     navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
 }
 
+let isToggling = false;
 async function toggleFavorite(id) {
+    if (isToggling) return;
+    isToggling = true;
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch(`/vault/${id}/favorite`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: authHeaders()
         });
         if (response.ok) {
             window.location.reload();
         } else {
             showToast('Failed to toggle favorite.', true);
+            isToggling = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        isToggling = false;
     }
 }
 
+let isDeleting = false;
 async function deleteEntry(id) {
     if (!confirm('Delete this entry? This cannot be undone.')) return;
+    if (isDeleting) return;
+    isDeleting = true;
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch(`/vault/${id}/delete`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: authHeaders()
         });
         const result = await response.json();
         if (response.ok) {
             window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
         } else {
             showToast(result.detail || 'Failed to delete entry.', true);
+            isDeleting = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        isDeleting = false;
     }
 }
 </script>

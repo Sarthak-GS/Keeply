@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from auth.dependencies import CurrentUser
+from auth.dependencies import CurrentUser, _invalidate_user_cache
 from services import auth_service
 from schemas.user import PasswordChangeRequest
 
@@ -40,6 +40,7 @@ async def change_password(
     )
     if not success:
         raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    _invalidate_user_cache(current_user.id)
 
     # Return JSON — client-side JS will clear localStorage and redirect
     return JSONResponse({
@@ -54,6 +55,7 @@ async def delete_account(
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
+    _invalidate_user_cache(current_user.id)
     await auth_service.delete_user(db, current_user)
     # Return JSON — client-side JS will clear localStorage and redirect
     return JSONResponse({

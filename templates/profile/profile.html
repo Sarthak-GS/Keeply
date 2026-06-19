@@ -69,23 +69,30 @@
 
 {% block scripts %}
 <script>
+let isChangingPassword = false;
 document.getElementById('change-password-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isChangingPassword) return;
+
     const errorBox = document.getElementById('error-box');
     errorBox.classList.add('hidden');
+
+    isChangingPassword = true;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const origText = submitBtn.innerText;
+    submitBtn.innerText = "Updating...";
+    submitBtn.disabled = true;
 
     const form = e.target;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch('/profile/change-password', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: authHeaders({
+                'Content-Type': 'application/json'
+            }),
             body: JSON.stringify(data)
         });
         const result = await response.json();
@@ -97,19 +104,27 @@ document.getElementById('change-password-form').addEventListener('submit', async
         } else {
             errorBox.textContent = '⚠️ ' + (result.detail || 'Failed to update password.');
             errorBox.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerText = origText;
+            isChangingPassword = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        submitBtn.disabled = false;
+        submitBtn.innerText = origText;
+        isChangingPassword = false;
     }
 });
 
+let isDeletingAccount = false;
 async function deleteAccount() {
     if (!confirm('Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.')) return;
+    if (isDeletingAccount) return;
+    isDeletingAccount = true;
     try {
-        const token = localStorage.getItem("access_token");
         const response = await fetch('/profile/delete', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: authHeaders()
         });
         const result = await response.json();
         if (response.ok) {
@@ -118,9 +133,11 @@ async function deleteAccount() {
             window.location.href = '/login?msg=' + encodeURIComponent(result.message || 'Account deleted.') + '&msg_type=success';
         } else {
             showToast(result.detail || 'Failed to delete account.', true);
+            isDeletingAccount = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        isDeletingAccount = false;
     }
 }
 </script>

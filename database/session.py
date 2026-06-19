@@ -1,22 +1,30 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from config.settings import settings
 
-url = settings.DATABASE_URL
-if url.startswith("sqlite://"):
-    url = url.replace("sqlite://", "sqlite+aiosqlite://")
+# Supabase async engine with pooler compatibility
+engine = create_async_engine(
+    settings.async_database_url,
+    pool_pre_ping=False,
+    pool_size=5,
+    max_overflow=10,
+    pool_recycle=300,
+    pool_timeout=10,
+    connect_args={
+        "ssl": "require",
+        "statement_cache_size": 0,
+        "command_timeout": 10,
+    },
+)
 
-connect_args = {}
-if "sqlite" in url:
-    connect_args = {"check_same_thread": False}
-
-engine = create_async_engine(url, connect_args=connect_args)
-SessionLocal = async_sessionmaker(bind=engine, autoflush=False, autocommit=False)
+SessionLocal = async_sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
 async def get_db():
-    """FastAPI async dependency that yields a DB session per request."""
     async with SessionLocal() as db:
-        try:
-            yield db
-        finally:
-            await db.close()
+        yield db

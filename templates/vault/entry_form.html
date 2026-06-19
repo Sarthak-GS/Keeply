@@ -56,7 +56,7 @@
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">👁</button>
                 </div>
                 <button type="button" id="gen-btn" onclick="openGenerator()"
-                        class="shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
+                        class="shrink-0 cursor-pointer rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
                     Generate
                 </button>
             </div>
@@ -96,7 +96,7 @@
         <!-- Actions -->
         <div class="flex gap-3 pt-2">
             <button type="submit"
-                    class="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90">
+                    class="flex-1 cursor-pointer rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90">
                 {{ 'Save Changes' if entry else 'Save Entry' }}
             </button>
             <a href="{{ '/vault/' + entry.id|string if entry else '/vault/dashboard' }}"
@@ -180,17 +180,30 @@ function usePassword() {
     showToast('Password applied!');
 }
 
-// Intercept form submit
+let isSubmitting = false;
+
+// Intercept form submit — simple and self-contained double-click prevention
 document.querySelector('form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const form = e.target;
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    isSubmitting = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = "Saving...";
+    submitBtn.disabled = true;
+
     const formData = new FormData(form);
-    
-    // Construct JSON object from form data
     const data = Object.fromEntries(formData.entries());
-    
+
     // Convert folder_id to number or null
-    if (data.folder_id === "" || !data.folder_id) {
+    if (!data.folder_id) {
         data.folder_id = null;
     } else {
         data.folder_id = parseInt(data.folder_id, 10);
@@ -199,12 +212,16 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     const action = form.getAttribute('action');
     try {
         const token = localStorage.getItem("access_token");
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(action, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: headers,
             body: JSON.stringify(data)
         });
 
@@ -213,9 +230,15 @@ document.querySelector('form').addEventListener('submit', async (e) => {
             window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
         } else {
             showToast(result.detail || result.message || 'An error occurred', true);
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+            isSubmitting = false;
         }
     } catch (err) {
         showToast('Network error, please try again.', true);
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+        isSubmitting = false;
     }
 });
 </script>

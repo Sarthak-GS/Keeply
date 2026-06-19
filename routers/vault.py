@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -25,14 +26,17 @@ async def dashboard(
     msg_type: str = "",
 ):
     flash = {"message": msg, "type": msg_type} if msg else None
-    entries = await vault_service.get_all_entries(
-        db,
-        current_user.id,
-        search=search,
-        folder_id=folder_id,
-        favorites_only=bool(favorites),
+    # Run queries concurrently
+    entries, folders = await asyncio.gather(
+        vault_service.get_all_entries(
+            db,
+            current_user.id,
+            search=search,
+            folder_id=folder_id,
+            favorites_only=bool(favorites),
+        ),
+        folder_service.get_all_folders(db, current_user.id),
     )
-    folders = await folder_service.get_all_folders(db, current_user.id)
     return templates.TemplateResponse(
         request,
         "vault/dashboard.html",

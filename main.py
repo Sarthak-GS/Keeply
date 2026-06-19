@@ -11,7 +11,6 @@ from sqlalchemy import text
 
 from config.settings import settings
 from database.session import engine, get_db
-from database.base import Base
 
 # Import all models so SQLAlchemy registers them before create_all
 from models import user, vault_entry, folder, password_reset  # noqa: F401
@@ -21,24 +20,22 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan for Async DB Initialization ─────────────────────────────────────
+# ── Lifespan ─────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        def check_and_create(sync_conn):
-            from sqlalchemy import inspect
-            inspector = inspect(sync_conn)
-            tables = inspector.get_table_names()
+    import asyncio
+    from sqlalchemy import text
 
-            # if "users" in tables:
-            #     columns = [col["name"] for col in inspector.get_columns("users")]
-            #     # If deprecated columns exist, recreate database for a clean start
-            #     if "encrypted_dek" in columns or "server_encrypted_dek" in columns:
-            #         Base.metadata.drop_all(bind=sync_conn)
+    # Warm the connection pool in the background so startup isn't blocked
+    async def _warm_pool():
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(text("SELECT 1"))
+            logger.info("Database connection verified.")
+        except Exception as e:
+            logger.error(f"Database connection failed on startup: {e}")
 
-            Base.metadata.create_all(bind=sync_conn)
-
-        await conn.run_sync(check_and_create)
+    asyncio.create_task(_warm_pool())
     yield
 
 
