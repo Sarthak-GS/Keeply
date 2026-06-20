@@ -70,7 +70,7 @@
                 </div>
 
                 <button type="submit"
-                        class="mt-2 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]">
+                        class="mt-2 w-full cursor-pointer rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]">
                     Create Account
                 </button>
             </form>
@@ -84,6 +84,12 @@
 </div>
 
 <script>
+document.querySelector('form').addEventListener('submit', (e) => {
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Creating Account...';
+});
+
 function toggleVisibility(id, btn) {
     const el = document.getElementById(id);
     el.type = el.type === 'password' ? 'text' : 'password';

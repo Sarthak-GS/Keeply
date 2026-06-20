@@ -1,5 +1,6 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from models.folder import Folder
 from schemas.folder import FolderCreate
 from typing import List, Optional
@@ -18,7 +19,7 @@ async def create_folder(db: AsyncSession, folder_data: FolderCreate, user_id: in
 
 
 async def get_all_folders(db: AsyncSession, user_id: int) -> List[Folder]:
-    stmt = select(Folder).filter(Folder.user_id == user_id).order_by(Folder.name)
+    stmt = select(Folder).options(selectinload(Folder.vault_entries)).filter(Folder.user_id == user_id).order_by(Folder.name)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 

@@ -1,5 +1,6 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from models.vault_entry import VaultEntry
 from schemas.vault_entry import VaultEntryCreate, VaultEntryUpdate
 from utils.encryption import encrypt_password, decrypt_password
@@ -28,7 +29,7 @@ async def get_all_entries(
     folder_id: Optional[int] = None,
     favorites_only: bool = False,
 ) -> List[VaultEntry]:
-    stmt = select(VaultEntry).filter(VaultEntry.user_id == user_id)
+    stmt = select(VaultEntry).options(selectinload(VaultEntry.folder)).filter(VaultEntry.user_id == user_id)
     if search:
         stmt = stmt.filter(
             VaultEntry.title.ilike(f"%{search}%")
@@ -44,7 +45,7 @@ async def get_all_entries(
     return list(result.scalars().all())
 
 async def get_entry_by_id(db: AsyncSession, entry_id: int, user_id: int) -> Optional[VaultEntry]:
-    stmt = select(VaultEntry).filter(VaultEntry.id == entry_id, VaultEntry.user_id == user_id)
+    stmt = select(VaultEntry).options(selectinload(VaultEntry.folder)).filter(VaultEntry.id == entry_id, VaultEntry.user_id == user_id)
     result = await db.execute(stmt)
     return result.scalars().first()
 

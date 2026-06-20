@@ -39,7 +39,9 @@ function showConnected() {
 }
 
 // ── Login ───────────────────────────────────────────────────────────────────
+let isLoggingIn = false;
 $("login-btn").addEventListener("click", async () => {
+  if (isLoggingIn) return;
   const email = $("email").value.trim();
   const pw = $("password").value;
   const errEl = $("login-error");
@@ -50,6 +52,12 @@ $("login-btn").addEventListener("click", async () => {
     errEl.style.display = "block";
     return;
   }
+
+  isLoggingIn = true;
+  const btn = $("login-btn");
+  const origText = btn.textContent;
+  btn.textContent = "Linking...";
+  btn.disabled = true;
 
   const body = new URLSearchParams();
   body.append("username", email);
@@ -65,15 +73,24 @@ $("login-btn").addEventListener("click", async () => {
     if (r.ok && data.access_token) {
       chrome.storage.local.set({ vaultify_token: data.access_token }, () => {
         showToast("Connected!");
+        isLoggingIn = false;
+        btn.textContent = origText;
+        btn.disabled = false;
         showConnected();
       });
     } else {
       errEl.textContent = data.detail || "Authentication failed.";
       errEl.style.display = "block";
+      isLoggingIn = false;
+      btn.textContent = origText;
+      btn.disabled = false;
     }
   } catch {
     errEl.textContent = "Cannot reach Vaultify server.";
     errEl.style.display = "block";
+    isLoggingIn = false;
+    btn.textContent = origText;
+    btn.disabled = false;
   }
 });
 
@@ -120,7 +137,7 @@ function loadPending() {
 
     // Attach event listeners
     credList.querySelectorAll(".btn-save").forEach((btn) => {
-      btn.addEventListener("click", () => saveCred(parseInt(btn.dataset.idx)));
+      btn.addEventListener("click", () => saveCred(parseInt(btn.dataset.idx), btn));
     });
     credList.querySelectorAll(".btn-dismiss").forEach((btn) => {
       btn.addEventListener("click", () => dismissCred(parseInt(btn.dataset.idx)));
@@ -129,7 +146,8 @@ function loadPending() {
 }
 
 // ── Save a credential to the vault ──────────────────────────────────────────
-async function saveCred(idx) {
+async function saveCred(idx, btn) {
+  if (btn.disabled) return;
   const res = await new Promise((r) =>
     chrome.storage.local.get(["vaultify_token", "pending_creds"], r)
   );
@@ -137,6 +155,10 @@ async function saveCred(idx) {
   const list = res.pending_creds || [];
   const cred = list[idx];
   if (!token || !cred) return;
+
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = "Saving...";
 
   try {
     const r = await fetch(`${API}/vault/new`, {
@@ -159,14 +181,20 @@ async function saveCred(idx) {
       showToast("Saved to vault!");
       list.splice(idx, 1);
       chrome.storage.local.set({ pending_creds: list }, loadPending);
-    } else if (r.status === 401) {
-      showToast("Session expired — reconnect.", true);
-      chrome.storage.local.remove(["vaultify_token"]);
-      showLogin();
     } else {
-      showToast("Save failed.", true);
+      btn.disabled = false;
+      btn.textContent = origText;
+      if (r.status === 401) {
+        showToast("Session expired — reconnect.", true);
+        chrome.storage.local.remove(["vaultify_token"]);
+        showLogin();
+      } else {
+        showToast("Save failed.", true);
+      }
     }
   } catch {
+    btn.disabled = false;
+    btn.textContent = origText;
     showToast("Cannot reach server.", true);
   }
 }

@@ -325,3 +325,11 @@ a {
         font-size: clamp(2.4rem, 12vw, 4rem);
     }
 }
+
+/* Global cursor pointers for interactive elements */
+button,
+[role="button"],
+.cursor-pointer,
+.btn {
+    cursor: pointer !important;
+}
