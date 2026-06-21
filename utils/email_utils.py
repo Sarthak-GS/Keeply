@@ -126,11 +126,15 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
     message.attach(MIMEText(html_content, "html"))
 
     try:
+        # Port 465 requires direct SSL/TLS (use_tls=True), port 587 requires STARTTLS (start_tls=True)
+        use_tls = True if settings.SMTP_PORT == 465 else False
+        start_tls = False if settings.SMTP_PORT == 465 else settings.SMTP_USE_TLS
+
         smtp_client = aiosmtplib.SMTP(
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
-            use_tls=False,
-            start_tls=settings.SMTP_USE_TLS,
+            use_tls=use_tls,
+            start_tls=start_tls,
         )
         await smtp_client.connect()
         

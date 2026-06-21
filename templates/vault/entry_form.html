@@ -19,44 +19,42 @@
     <div class="mb-4 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300">{{ error }}</div>
     {% endif %}
 
-    <form method="POST"
-          action="{% if entry %}/vault/{{ entry.id }}/edit{% else %}/vault/new{% endif %}"
-          class="space-y-5">
+    <form method="POST" action="{% if entry %}/vault/{{ entry.id }}/edit{% else %}/vault/new{% endif %}"
+        class="space-y-5">
 
         <!-- Title -->
         <div>
-            <label class="mb-1.5 block text-sm font-medium text-slate-300">Title <span class="text-red-400">*</span></label>
-            <input name="title" type="text" required
-                   value="{{ entry.title if entry else '' }}"
-                   placeholder="e.g. Gmail, GitHub, Bank"
-                   class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+            <label class="mb-1.5 block text-sm font-medium text-slate-300">Title <span
+                    class="text-red-400">*</span></label>
+            <input name="title" type="text" required value="{{ entry.title if entry else '' }}"
+                placeholder="e.g. Gmail, GitHub, Bank"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
         </div>
 
         <!-- Username -->
         <div>
             <label class="mb-1.5 block text-sm font-medium text-slate-300">Username / Email</label>
-            <input name="username" type="text"
-                   value="{{ entry.username if entry else '' }}"
-                   placeholder="your@email.com or @username"
-                   class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+            <input name="username" type="text" value="{{ entry.username if entry else '' }}"
+                placeholder="your@email.com or @username"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
         </div>
 
         <!-- Password -->
         <div>
             <label class="mb-1.5 block text-sm font-medium text-slate-300">
-                Password {% if entry %}<span class="text-xs text-slate-500">(leave blank to keep current)</span>{% else %}<span class="text-red-400">*</span>{% endif %}
+                Password {% if entry %}<span class="text-xs text-slate-500">(leave blank to keep current)</span>{% else
+                %}<span class="text-red-400">*</span>{% endif %}
             </label>
             <div class="flex gap-2">
                 <div class="relative flex-1">
-                    <input id="vault-password" name="password" type="password"
-                           {% if not entry %}required{% endif %}
-                           placeholder="{% if entry %}Leave blank to keep current{% else %}Enter or generate a password{% endif %}"
-                           class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+                    <input id="vault-password" name="password" type="password" {% if not entry %}required{% endif %}
+                        placeholder="{% if entry %}Leave blank to keep current{% else %}Enter or generate a password{% endif %}"
+                        class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
                     <button type="button" onclick="toggleVisibility('vault-password', this)"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">👁</button>
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">👁</button>
                 </div>
                 <button type="button" id="gen-btn" onclick="openGenerator()"
-                        class="shrink-0 cursor-pointer rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
+                    class="shrink-0 cursor-pointer rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
                     Generate
                 </button>
             </div>
@@ -65,20 +63,18 @@
         <!-- URL -->
         <div>
             <label class="mb-1.5 block text-sm font-medium text-slate-300">Website URL</label>
-            <input name="url" type="text"
-                   value="{{ entry.url if entry else '' }}"
-                   placeholder="e.g. www.netflix.com"
-                   class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+            <input name="url" type="text" value="{{ entry.url if entry else '' }}" placeholder="e.g. www.netflix.com"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
         </div>
 
         <!-- Folder -->
         <div>
             <label class="mb-1.5 block text-sm font-medium text-slate-300">Folder</label>
             <select name="folder_id"
-                    class="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-300 outline-none focus:border-cyan-500/50">
+                class="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-300 outline-none focus:border-cyan-500/50">
                 <option value="">— No folder —</option>
                 {% for f in folders %}
-                <option value="{{ f.id }}" {% if entry and entry.folder_id == f.id %}selected{% endif %}>
+                <option value="{{ f.id }}" {% if entry and entry.folder_id==f.id %}selected{% endif %}>
                     {{ f.icon }} {{ f.name }}
                 </option>
                 {% endfor %}
@@ -88,19 +84,18 @@
         <!-- Notes -->
         <div>
             <label class="mb-1.5 block text-sm font-medium text-slate-300">Notes</label>
-            <textarea name="notes" rows="3"
-                      placeholder="Any extra info (optional)…"
-                      class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 resize-none">{{ entry.notes if entry else '' }}</textarea>
+            <textarea name="notes" rows="3" placeholder="Any extra info (optional)…"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 resize-none">{{ entry.notes if entry else '' }}</textarea>
         </div>
 
         <!-- Actions -->
         <div class="flex gap-3 pt-2">
             <button type="submit"
-                    class="flex-1 cursor-pointer rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90">
+                class="flex-1 cursor-pointer rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90">
                 {{ 'Save Changes' if entry else 'Save Entry' }}
             </button>
             <a href="{{ '/vault/' + entry.id|string if entry else '/vault/dashboard' }}"
-               class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-medium text-slate-300 transition hover:bg-white/10">
+                class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm font-medium text-slate-300 transition hover:bg-white/10">
                 Cancel
             </a>
         </div>
@@ -112,15 +107,15 @@
     <div class="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-glow">
         <h2 class="mb-4 font-display text-lg font-bold text-white">Password Generator</h2>
         <div id="gen-output"
-             class="mb-4 break-all rounded-xl bg-black/40 px-4 py-3 font-mono text-sm text-cyan-300 min-h-[48px]">
+            class="mb-4 break-all rounded-xl bg-black/40 px-4 py-3 font-mono text-sm text-cyan-300 min-h-[48px]">
             Click Generate
         </div>
         <div class="mb-4 space-y-3">
             <label class="flex items-center justify-between text-sm text-slate-300">
                 Length: <span id="len-val">16</span>
                 <input id="gen-length" type="range" min="8" max="64" value="16"
-                       oninput="document.getElementById('len-val').textContent=this.value"
-                       class="ml-4 w-32 accent-cyan-400">
+                    oninput="document.getElementById('len-val').textContent=this.value"
+                    class="ml-4 w-32 accent-cyan-400">
             </label>
             <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                 <input id="gen-symbols" type="checkbox" checked class="accent-cyan-400">
@@ -129,15 +124,15 @@
         </div>
         <div class="flex gap-2">
             <button onclick="generateAndFill()"
-                    class="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2 text-sm font-bold text-white hover:opacity-90">
+                class="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2 text-sm font-bold text-white hover:opacity-90">
                 Generate
             </button>
             <button onclick="usePassword()"
-                    class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-sm font-medium text-slate-300 hover:bg-white/10">
+                class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-sm font-medium text-slate-300 hover:bg-white/10">
                 Use This
             </button>
             <button onclick="closeGenerator()"
-                    class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400 hover:bg-white/10">
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400 hover:bg-white/10">
                 ✕
             </button>
         </div>
@@ -147,99 +142,99 @@
 
 {% block scripts %}
 <script>
-function toggleVisibility(id, btn) {
-    const el = document.getElementById(id);
-    el.type = el.type === 'password' ? 'text' : 'password';
-    btn.textContent = el.type === 'password' ? '👁' : '🙈';
-}
-
-function openGenerator() { document.getElementById('gen-modal').classList.remove('hidden'); generateAndFill(); }
-function closeGenerator() { document.getElementById('gen-modal').classList.add('hidden'); }
-
-async function generateAndFill() {
-    const len = document.getElementById('gen-length').value;
-    const sym = document.getElementById('gen-symbols').checked;
-    const token = localStorage.getItem("access_token");
-    const r = await fetch(`/vault/api/generate-password?length=${len}&symbols=${sym}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    const { password } = await r.json();
-    document.getElementById('gen-output').textContent = password;
-    document.getElementById('gen-output').dataset.pw = password;
-}
-
-function usePassword() {
-    const pw = document.getElementById('gen-output').dataset.pw;
-    if (!pw) return;
-    const field = document.getElementById('vault-password');
-    field.value = pw;
-    field.type = 'text';
-    closeGenerator();
-    showToast('Password applied!');
-}
-
-let isSubmitting = false;
-
-// Intercept form submit — simple and self-contained double-click prevention
-document.querySelector('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    const form = e.target;
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+    function toggleVisibility(id, btn) {
+        const el = document.getElementById(id);
+        el.type = el.type === 'password' ? 'text' : 'password';
+        btn.textContent = el.type === 'password' ? '👁' : '🙈';
     }
 
-    isSubmitting = true;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerText;
-    submitBtn.innerText = "Saving...";
-    submitBtn.disabled = true;
+    function openGenerator() { document.getElementById('gen-modal').classList.remove('hidden'); generateAndFill(); }
+    function closeGenerator() { document.getElementById('gen-modal').classList.add('hidden'); }
 
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-
-    // Convert folder_id to number or null
-    if (!data.folder_id) {
-        data.folder_id = null;
-    } else {
-        data.folder_id = parseInt(data.folder_id, 10);
-    }
-
-    const action = form.getAttribute('action');
-    try {
+    async function generateAndFill() {
+        const len = document.getElementById('gen-length').value;
+        const sym = document.getElementById('gen-symbols').checked;
         const token = localStorage.getItem("access_token");
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        const r = await fetch(`/vault/api/generate-password?length=${len}&symbols=${sym}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const { password } = await r.json();
+        document.getElementById('gen-output').textContent = password;
+        document.getElementById('gen-output').dataset.pw = password;
+    }
+
+    function usePassword() {
+        const pw = document.getElementById('gen-output').dataset.pw;
+        if (!pw) return;
+        const field = document.getElementById('vault-password');
+        field.value = pw;
+        field.type = 'text';
+        closeGenerator();
+        showToast('Password applied!');
+    }
+
+    let isSubmitting = false;
+
+    // Intercept form submit — simple and self-contained double-click prevention
+    document.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const form = e.target;
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
         }
 
-        const response = await fetch(action, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(data)
-        });
+        isSubmitting = true;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerText;
+        submitBtn.innerText = "Saving...";
+        submitBtn.disabled = true;
 
-        const result = await response.json();
-        if (response.ok) {
-            window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Convert folder_id to number or null
+        if (!data.folder_id) {
+            data.folder_id = null;
         } else {
-            showToast(result.detail || result.message || 'An error occurred', true);
+            data.folder_id = parseInt(data.folder_id, 10);
+        }
+
+        const action = form.getAttribute('action');
+        try {
+            const token = localStorage.getItem("access_token");
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(action, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            } else {
+                showToast(result.detail || result.message || 'An error occurred', true);
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+                isSubmitting = false;
+            }
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             submitBtn.disabled = false;
             submitBtn.innerText = originalText;
             isSubmitting = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalText;
-        isSubmitting = false;
-    }
-});
+    });
 </script>
 {% endblock %}
