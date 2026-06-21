@@ -17,16 +17,24 @@
         <h2 class="mb-4 text-sm font-semibold text-slate-300 uppercase tracking-wider">New Folder</h2>
         <form id="create-folder-form" class="flex flex-wrap gap-3">
             <select id="folder-icon" name="icon"
-                    class="rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-lg outline-none focus:border-cyan-500/50">
-                <option>📁</option><option>💼</option><option>🏠</option>
-                <option>💳</option><option>📧</option><option>🎮</option>
-                <option>🛒</option><option>🏥</option><option>📚</option>
-                <option>🔧</option><option>🌐</option><option>⭐</option>
+                class="rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-lg outline-none focus:border-cyan-500/50">
+                <option>📁</option>
+                <option>💼</option>
+                <option>🏠</option>
+                <option>💳</option>
+                <option>📧</option>
+                <option>🎮</option>
+                <option>🛒</option>
+                <option>🏥</option>
+                <option>📚</option>
+                <option>🔧</option>
+                <option>🌐</option>
+                <option>⭐</option>
             </select>
             <input id="folder-name" name="name" type="text" required placeholder="Folder name…"
-                   class="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
+                class="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
             <button type="submit"
-                    class="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
+                class="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
                 Create
             </button>
         </form>
@@ -36,23 +44,26 @@
     {% if folders %}
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {% for folder in folders %}
-        <div class="group flex items-center justify-between rounded-2xl border border-white/8 bg-slate-900/70 px-5 py-4 backdrop-blur transition hover:border-cyan-500/20">
+        <div
+            class="group flex items-center justify-between rounded-2xl border border-white/8 bg-slate-900/70 px-5 py-4 backdrop-blur transition hover:border-cyan-500/20">
             <a href="/vault/dashboard?folder_id={{ folder.id }}" class="flex items-center gap-3 min-w-0">
                 <span class="text-2xl">{{ folder.icon }}</span>
                 <div class="min-w-0">
                     <p class="truncate font-medium text-white">{{ folder.name }}</p>
-                    <p class="text-xs text-slate-500">{{ folder.vault_entries|length }} item{{ 's' if folder.vault_entries|length != 1 }}</p>
+                    <p class="text-xs text-slate-500">{{ folder.vault_entries|length }} item{{ 's' if
+                        folder.vault_entries|length != 1 }}</p>
                 </div>
             </a>
             <button onclick="deleteFolder({{ folder.id }}, '{{ folder.name }}')"
-                    class="ml-3 rounded-lg px-2 py-1.5 text-xs text-slate-500 opacity-0 transition hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100">
+                class="ml-3 rounded-lg px-2 py-1.5 text-xs text-slate-500 opacity-100 sm:opacity-0 transition hover:bg-red-900/30 hover:text-red-400 group-hover:opacity-100">
                 🗑
             </button>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-16 text-center">
+    <div
+        class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-16 text-center">
         <h2 class="font-display text-lg font-semibold text-white">No folders yet</h2>
         <p class="mt-1 text-sm text-slate-400">Create a folder above to organise your vault.</p>
     </div>
@@ -63,66 +74,66 @@
 
 {% block scripts %}
 <script>
-let isCreating = false;
-document.getElementById('create-folder-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (isCreating) return;
+    let isCreating = false;
+    document.getElementById('create-folder-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isCreating) return;
 
-    const name = document.getElementById('folder-name').value;
-    const icon = document.getElementById('folder-icon').value;
+        const name = document.getElementById('folder-name').value;
+        const icon = document.getElementById('folder-icon').value;
 
-    isCreating = true;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const origText = submitBtn.innerText;
-    submitBtn.innerText = "Creating...";
-    submitBtn.disabled = true;
+        isCreating = true;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const origText = submitBtn.innerText;
+        submitBtn.innerText = "Creating...";
+        submitBtn.disabled = true;
 
-    try {
-        const response = await fetch('/folders/new', {
-            method: 'POST',
-            headers: authHeaders({
-                'Content-Type': 'application/json'
-            }),
-            body: JSON.stringify({ name, icon })
-        });
-        const result = await response.json();
-        if (response.ok) {
-            window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
-        } else {
-            showToast(result.detail || 'Failed to create folder.', true);
+        try {
+            const response = await fetch('/folders/new', {
+                method: 'POST',
+                headers: authHeaders({
+                    'Content-Type': 'application/json'
+                }),
+                body: JSON.stringify({ name, icon })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            } else {
+                showToast(result.detail || 'Failed to create folder.', true);
+                submitBtn.disabled = false;
+                submitBtn.innerText = origText;
+                isCreating = false;
+            }
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             submitBtn.disabled = false;
             submitBtn.innerText = origText;
             isCreating = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        submitBtn.disabled = false;
-        submitBtn.innerText = origText;
-        isCreating = false;
-    }
-});
+    });
 
-let isDeleting = false;
-async function deleteFolder(id, name) {
-    if (!confirm(`Delete folder "${name}"? Entries will not be deleted.`)) return;
-    if (isDeleting) return;
-    isDeleting = true;
-    try {
-        const response = await fetch(`/folders/${id}/delete`, {
-            method: 'POST',
-            headers: authHeaders()
-        });
-        const result = await response.json();
-        if (response.ok) {
-            window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
-        } else {
-            showToast(result.detail || 'Failed to delete folder.', true);
+    let isDeleting = false;
+    async function deleteFolder(id, name) {
+        if (!confirm(`Delete folder "${name}"? Entries will not be deleted.`)) return;
+        if (isDeleting) return;
+        isDeleting = true;
+        try {
+            const response = await fetch(`/folders/${id}/delete`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = `/folders?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            } else {
+                showToast(result.detail || 'Failed to delete folder.', true);
+                isDeleting = false;
+            }
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             isDeleting = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        isDeleting = false;
     }
-}
 </script>
 {% endblock %}

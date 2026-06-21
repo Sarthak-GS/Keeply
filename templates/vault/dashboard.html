@@ -7,27 +7,30 @@
     <!-- Header row -->
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="font-display text-2xl font-bold text-white">Your Vault</h1>
-            <p class="mt-0.5 text-sm text-slate-400">{{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}</p>
+            <h1 class="font-display text-2xl font-bold text-white">{% if favorites %}Favorite Entries{% else %}Your Vault{% endif %}</h1>
+            <p class="mt-0.5 text-sm text-slate-400">{{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies'
+                }}</p>
         </div>
         <a href="/vault/new"
-           class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.02]">
+            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-glow-cyan transition hover:opacity-90 hover:scale-[1.02]">
             Add Entry
         </a>
     </div>
-
-
 
     <!-- Entry cards grid -->
     {% if entries %}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {% for entry in entries %}
-        <div class="group relative flex flex-col rounded-2xl border border-white/8 bg-slate-900/70 p-5 backdrop-blur transition hover:border-cyan-500/30 hover:shadow-[0_0_24px_rgba(103,213,255,0.12)]">
+        <div
+            class="group relative flex flex-col rounded-2xl border border-white/8 bg-slate-900/70 p-5 backdrop-blur transition hover:border-cyan-500/30 hover:shadow-[0_0_24px_rgba(103,213,255,0.12)]">
 
             <!-- Favorite star -->
             <div class="absolute right-4 top-4">
-                <button onclick="toggleFavorite({{ entry.id }}, this)" class="text-lg transition hover:scale-125" title="Toggle favorite">
-                    {% if entry.is_favorite %}<span class="text-yellow-400 shadow-glow-yellow">★</span>{% else %}<span class="opacity-40 hover:opacity-80 text-slate-300 hover:text-yellow-400 transition-colors">☆</span>{% endif %}
+                <button onclick="toggleFavorite({{ entry.id }}, this)" class="text-lg transition hover:scale-125"
+                    title="Toggle favorite">
+                    {% if entry.is_favorite %}<span class="text-yellow-400 shadow-glow-yellow">★</span>{% else %}<span
+                        class="opacity-40 hover:opacity-80 text-slate-300 hover:text-yellow-400 transition-colors">☆</span>{%
+                    endif %}
                 </button>
             </div>
 
@@ -44,7 +47,11 @@
             <!-- Username / URL -->
             <p class="mb-1 flex items-center gap-1.5 truncate text-sm text-slate-400">
                 {% if entry.username %}
-                <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 {{ entry.username }}
                 {% else %}
                 <span class="opacity-40">No username</span>
@@ -52,7 +59,11 @@
             </p>
             {% if entry.url %}
             <p class="mb-4 flex items-center gap-1.5 truncate text-xs text-cyan-600">
-                <svg class="h-3.5 w-3.5 text-cyan-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                <svg class="h-3.5 w-3.5 text-cyan-600/70" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
                 {{ entry.url }}
             </p>
             {% else %}
@@ -62,11 +73,11 @@
             <!-- Actions -->
             <div class="mt-auto flex items-center gap-2 border-t border-white/8 pt-4">
                 <a href="/vault/{{ entry.id }}"
-                   class="flex-1 rounded-lg bg-white/5 py-1.5 text-center text-xs font-medium text-slate-300 transition hover:bg-white/10">View</a>
+                    class="flex-1 rounded-lg bg-white/5 py-1.5 text-center text-xs font-medium text-slate-300 transition hover:bg-white/10">View</a>
                 <a href="/vault/{{ entry.id }}/edit"
-                   class="flex-1 rounded-lg bg-white/5 py-1.5 text-center text-xs font-medium text-slate-300 transition hover:bg-white/10">Edit</a>
+                    class="flex-1 rounded-lg bg-white/5 py-1.5 text-center text-xs font-medium text-slate-300 transition hover:bg-white/10">Edit</a>
                 <button onclick="copyEntryPassword({{ entry.id }}, this)"
-                        class="flex-1 rounded-lg bg-cyan-500/10 py-1.5 text-center text-xs font-medium text-cyan-400 transition hover:bg-cyan-500/20">
+                    class="flex-1 rounded-lg bg-cyan-500/10 py-1.5 text-center text-xs font-medium text-cyan-400 transition hover:bg-cyan-500/20">
                     Copy
                 </button>
             </div>
@@ -76,16 +87,18 @@
 
     {% else %}
     <!-- Empty state -->
-    <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-20 text-center">
+    <div
+        class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-20 text-center">
         <h2 class="mb-2 font-display text-xl font-semibold text-white">
             {% if search %}No results for "{{ search }}"{% else %}Your vault is empty{% endif %}
         </h2>
         <p class="mb-6 text-sm text-slate-400">
-            {% if search %}Try a different search term.{% else %}Add your first password entry to get started.{% endif %}
+            {% if search %}Try a different search term.{% else %}Add your first password entry to get started.{% endif
+            %}
         </p>
         {% if not search %}
         <a href="/vault/new"
-           class="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
+            class="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
             Add First Entry
         </a>
         {% endif %}
@@ -96,52 +109,52 @@
 
 {% block scripts %}
 <script>
-async function copyEntryPassword(id, btn) {
-    const orig = btn.innerHTML;
-    try {
-        const token = localStorage.getItem("access_token");
-        const r = await fetch(`/vault/api/entries/${id}/password`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!r.ok) throw new Error('Not found');
-        const { password } = await r.json();
-        await navigator.clipboard.writeText(password);
-        btn.innerHTML = 'Copied';
-        btn.classList.add('text-emerald-400', 'bg-emerald-500/10');
-        btn.classList.remove('text-cyan-400', 'bg-cyan-500/10');
-        showToast('Password copied to clipboard!');
-    } catch {
-        showToast('Copy failed — check browser permissions.', true);
-    } finally {
-        setTimeout(() => { btn.innerHTML = orig; btn.className = btn.className.replace('text-emerald-400 bg-emerald-500/10', 'text-cyan-400 bg-cyan-500/10'); }, 2000);
+    async function copyEntryPassword(id, btn) {
+        const orig = btn.innerHTML;
+        try {
+            const token = localStorage.getItem("access_token");
+            const r = await fetch(`/vault/api/entries/${id}/password`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!r.ok) throw new Error('Not found');
+            const { password } = await r.json();
+            await navigator.clipboard.writeText(password);
+            btn.innerHTML = 'Copied';
+            btn.classList.add('text-emerald-400', 'bg-emerald-500/10');
+            btn.classList.remove('text-cyan-400', 'bg-cyan-500/10');
+            showToast('Password copied to clipboard!');
+        } catch {
+            showToast('Copy failed — check browser permissions.', true);
+        } finally {
+            setTimeout(() => { btn.innerHTML = orig; btn.className = btn.className.replace('text-emerald-400 bg-emerald-500/10', 'text-cyan-400 bg-cyan-500/10'); }, 2000);
+        }
     }
-}
 
-let isToggling = false;
-async function toggleFavorite(id, btn) {
-    if (isToggling) return;
-    isToggling = true;
-    const origText = btn.innerHTML;
-    btn.innerHTML = '⏳';
-    try {
-        const response = await fetch(`/vault/${id}/favorite`, {
-            method: 'POST',
-            headers: authHeaders()
-        });
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            showToast('Failed to toggle favorite.', true);
+    let isToggling = false;
+    async function toggleFavorite(id, btn) {
+        if (isToggling) return;
+        isToggling = true;
+        const origText = btn.innerHTML;
+        btn.innerHTML = '⏳';
+        try {
+            const response = await fetch(`/vault/${id}/favorite`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                showToast('Failed to toggle favorite.', true);
+                btn.innerHTML = origText;
+                isToggling = false;
+            }
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             btn.innerHTML = origText;
             isToggling = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        btn.innerHTML = origText;
-        isToggling = false;
     }
-}
 </script>
 {% endblock %}

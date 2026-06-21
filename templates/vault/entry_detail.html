@@ -36,10 +36,10 @@
             <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
                 <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Username / Email</p>
                 <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm text-white">{{ entry.username or '—' }}</p>
+                    <p class="text-sm text-white break-all">{{ entry.username or '—' }}</p>
                     {% if entry.username %}
                     <button onclick="copyText('{{ entry.username }}')"
-                            class="shrink-0 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
+                        class="shrink-0 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
                         Copy
                     </button>
                     {% endif %}
@@ -50,14 +50,14 @@
             <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
                 <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Password</p>
                 <div class="flex items-center justify-between gap-3">
-                    <p id="pw-display" class="font-mono text-sm text-white tracking-widest">••••••••••••</p>
+                    <p id="pw-display" class="font-mono text-sm text-white tracking-widest break-all">••••••••••••</p>
                     <div class="flex shrink-0 gap-2">
                         <button onclick="revealPassword({{ entry.id }})"
-                                class="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
+                            class="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/10 hover:text-white transition">
                             Reveal
                         </button>
                         <button onclick="copyEntryPassword({{ entry.id }})"
-                                class="rounded-lg bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:bg-cyan-500/20 transition">
+                            class="rounded-lg bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:bg-cyan-500/20 transition">
                             Copy
                         </button>
                     </div>
@@ -69,7 +69,7 @@
             <div class="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
                 <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Website URL</p>
                 <a href="{{ entry.url }}" target="_blank" rel="noopener noreferrer"
-                   class="text-sm text-cyan-400 hover:text-cyan-300 transition break-all">{{ entry.url }}</a>
+                    class="text-sm text-cyan-400 hover:text-cyan-300 transition break-all">{{ entry.url }}</a>
             </div>
             {% endif %}
 
@@ -91,15 +91,15 @@
         <!-- Actions -->
         <div class="mt-6 flex flex-wrap gap-3">
             <a href="/vault/{{ entry.id }}/edit"
-               class="flex-1 min-w-[100px] rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-center text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
+                class="flex-1 min-w-[100px] rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-center text-sm font-bold text-white shadow-glow-cyan hover:opacity-90 transition">
                 Edit
             </a>
             <button onclick="toggleFavorite({{ entry.id }})"
-                    class="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10">
+                class="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10">
                 {% if entry.is_favorite %}★ Unfavorite{% else %}☆ Favorite{% endif %}
             </button>
             <button onclick="deleteEntry({{ entry.id }})"
-                    class="rounded-xl border border-red-500/30 bg-red-900/20 px-5 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-900/40">
+                class="rounded-xl border border-red-500/30 bg-red-900/20 px-5 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-900/40">
                 Delete
             </button>
         </div>
@@ -109,88 +109,88 @@
 
 {% block scripts %}
 <script>
-let revealed = false;
+    let revealed = false;
 
-async function revealPassword(id) {
-    const display = document.getElementById('pw-display');
-    if (revealed) {
-        display.textContent = '••••••••••••';
-        revealed = false;
-        return;
+    async function revealPassword(id) {
+        const display = document.getElementById('pw-display');
+        if (revealed) {
+            display.textContent = '••••••••••••';
+            revealed = false;
+            return;
+        }
+        try {
+            const token = localStorage.getItem("access_token");
+            const r = await fetch(`/vault/api/entries/${id}/password`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const { password } = await r.json();
+            display.textContent = password;
+            revealed = true;
+        } catch { showToast('Could not load password.', true); }
     }
-    try {
-        const token = localStorage.getItem("access_token");
-        const r = await fetch(`/vault/api/entries/${id}/password`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
+
+    async function copyEntryPassword(id) {
+        try {
+            const token = localStorage.getItem("access_token");
+            const r = await fetch(`/vault/api/entries/${id}/password`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const { password } = await r.json();
+            await navigator.clipboard.writeText(password);
+            showToast('Password copied!');
+        } catch { showToast('Copy failed.', true); }
+    }
+
+    function copyText(text) {
+        navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
+    }
+
+    let isToggling = false;
+    async function toggleFavorite(id) {
+        if (isToggling) return;
+        isToggling = true;
+        try {
+            const response = await fetch(`/vault/${id}/favorite`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                showToast('Failed to toggle favorite.', true);
+                isToggling = false;
             }
-        });
-        const { password } = await r.json();
-        display.textContent = password;
-        revealed = true;
-    } catch { showToast('Could not load password.', true); }
-}
-
-async function copyEntryPassword(id) {
-    try {
-        const token = localStorage.getItem("access_token");
-        const r = await fetch(`/vault/api/entries/${id}/password`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const { password } = await r.json();
-        await navigator.clipboard.writeText(password);
-        showToast('Password copied!');
-    } catch { showToast('Copy failed.', true); }
-}
-
-function copyText(text) {
-    navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
-}
-
-let isToggling = false;
-async function toggleFavorite(id) {
-    if (isToggling) return;
-    isToggling = true;
-    try {
-        const response = await fetch(`/vault/${id}/favorite`, {
-            method: 'POST',
-            headers: authHeaders()
-        });
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            showToast('Failed to toggle favorite.', true);
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             isToggling = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        isToggling = false;
     }
-}
 
-let isDeleting = false;
-async function deleteEntry(id) {
-    if (!confirm('Delete this entry? This cannot be undone.')) return;
-    if (isDeleting) return;
-    isDeleting = true;
-    try {
-        const response = await fetch(`/vault/${id}/delete`, {
-            method: 'POST',
-            headers: authHeaders()
-        });
-        const result = await response.json();
-        if (response.ok) {
-            window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
-        } else {
-            showToast(result.detail || 'Failed to delete entry.', true);
+    let isDeleting = false;
+    async function deleteEntry(id) {
+        if (!confirm('Delete this entry? This cannot be undone.')) return;
+        if (isDeleting) return;
+        isDeleting = true;
+        try {
+            const response = await fetch(`/vault/${id}/delete`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            const result = await response.json();
+            if (response.ok) {
+                window.location.href = `/vault/dashboard?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+            } else {
+                showToast(result.detail || 'Failed to delete entry.', true);
+                isDeleting = false;
+            }
+        } catch (err) {
+            showToast('Network error, please try again.', true);
             isDeleting = false;
         }
-    } catch (err) {
-        showToast('Network error, please try again.', true);
-        isDeleting = false;
     }
-}
 </script>
 {% endblock %}
