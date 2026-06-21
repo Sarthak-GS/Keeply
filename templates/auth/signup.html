@@ -19,15 +19,13 @@
                 <p class="text-sm text-slate-400">Secure, private, yours.</p>
             </div>
 
-            <!-- Server-side errors (username/email taken etc.) -->
-            {% if errors %}
-            <div class="mb-4 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300 space-y-1">
-                {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+            <!-- API errors (uniqueness, etc.) -->
+            <div id="error-box"
+                 class="mb-4 rounded-xl border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300 hidden">
             </div>
-            {% endif %}
 
             <!-- Form -->
-            <form id="signup-form" method="POST" action="/signup" class="space-y-4">
+            <form id="signup-form" class="space-y-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-300">Username</label>
                     <input id="username" name="username" type="text" required
@@ -49,7 +47,7 @@
                                placeholder="Min 8 chars, 1 uppercase, 1 number"
                                oninput="updateStrength(this.value)"
                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
-                        <button type="button" onclick="toggleVisibility('reg-password', this)"
+                        <button type="button" onclick="toggleVisibility('reg-password', this)" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white">Show</button>
                     </div>
                     <!-- Strength bar -->
@@ -84,16 +82,57 @@
 </div>
 
 <script>
-document.querySelector('form').addEventListener('submit', (e) => {
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById('error-box');
     const btn = e.target.querySelector('button[type="submit"]');
+
+    errorBox.classList.add('hidden');
+    errorBox.textContent = '';
     btn.disabled = true;
+    const originalText = btn.textContent;
     btn.textContent = 'Creating Account...';
+
+    try {
+        const response = await fetch('/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                email: document.getElementById('reg-email').value,
+                password: document.getElementById('reg-password').value,
+                confirm_password: document.getElementById('confirm-password').value,
+            }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = `/login?msg=${encodeURIComponent(result.message)}&msg_type=success`;
+        } else {
+            const detail = result.detail;
+            errorBox.textContent = Array.isArray(detail) ? detail.join(' · ') : (detail || 'Registration failed.');
+            errorBox.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    } catch (err) {
+        errorBox.textContent = 'Network error, please try again.';
+        errorBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
 });
 
 function toggleVisibility(id, btn) {
     const el = document.getElementById(id);
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
     el.type = el.type === 'password' ? 'text' : 'password';
     btn.textContent = el.type === 'password' ? 'Show' : 'Hide';
+    el.focus();
+    if (start !== null && end !== null) {
+        el.setSelectionRange(start, end);
+    }
 }
 
 function updateStrength(val) {

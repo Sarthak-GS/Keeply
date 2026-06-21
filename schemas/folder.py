@@ -1,11 +1,12 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel, Field
+
 
 class FolderCreate(BaseModel):
-    name: str
-    icon: Optional[str] = "📁"
+    name: str = Field(min_length=1, max_length=100, description="Folder display name.")
+    icon: Optional[str] = Field(default="📁", max_length=10)
 
 
 class FolderResponse(BaseModel):
@@ -14,5 +15,4 @@ class FolderResponse(BaseModel):
     icon: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

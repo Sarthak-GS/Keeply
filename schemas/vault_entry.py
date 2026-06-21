@@ -1,23 +1,24 @@
-from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel, Field
+
 
 class VaultEntryCreate(BaseModel):
-    title: str
-    username: Optional[str] = ""
-    password: str
-    url: Optional[str] = ""
-    notes: Optional[str] = ""
+    title: str = Field(min_length=1, max_length=200, description="Display name for the entry.")
+    username: Optional[str] = Field(default="", max_length=200)
+    password: str = Field(min_length=1, max_length=1000, description="The credential to store (encrypted at rest).")
+    url: Optional[str] = Field(default="", max_length=2000)
+    notes: Optional[str] = Field(default="", max_length=5000)
     folder_id: Optional[int] = None
 
 
 class VaultEntryUpdate(BaseModel):
-    title: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    url: Optional[str] = None
-    notes: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    username: Optional[str] = Field(default=None, max_length=200)
+    password: Optional[str] = Field(default=None, min_length=1, max_length=1000)
+    url: Optional[str] = Field(default=None, max_length=2000)
+    notes: Optional[str] = Field(default=None, max_length=5000)
     folder_id: Optional[int] = None
 
 
@@ -32,5 +33,4 @@ class VaultEntryResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

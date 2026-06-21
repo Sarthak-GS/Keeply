@@ -1,8 +1,8 @@
-import re
-import base64
+import logging
 from typing import Annotated
-from fastapi import APIRouter, Depends, Form, Request, HTTPException, BackgroundTasks
-from fastapi.responses import RedirectResponse
+
+from fastapi import APIRouter, Depends, Request, HTTPException, BackgroundTasks
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +10,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.session import get_db
 from services import auth_service
 from auth.jwt_handler import create_access_token
-from schemas.user import UserCreate, UserResponse, Token, PasswordResetConfirm
+from schemas.user import (
+    UserCreate,
+    UserRegister,
+    UserResponse,
+    Token,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+)
 from auth.dependencies import CurrentUser
 from utils.email_utils import send_password_reset_email
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Authentication"])
 templates = Jinja2Templates(directory="templates")
@@ -31,47 +40,29 @@ def signup_page(request: Request, msg: str = "", msg_type: str = ""):
     return templates.TemplateResponse(request, "auth/signup.html", {"flash": flash})
 
 
-@router.post("/signup", include_in_schema=False)
+@router.post("/signup")
 async def signup(
-    request: Request,
+    data: UserRegister,
     db: Annotated[AsyncSession, Depends(get_db)],
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    confirm_password: str = Form(...),
 ):
+    """Register a new user account. Validation is handled entirely by UserRegister."""
     errors = []
 
-    if len(username) < 3 or len(username) > 50:
-        errors.append("Username must be 3–50 characters.")
-    if not re.match(r"^[a-zA-Z0-9_]+$", username):
-        errors.append("Username can only contain letters, numbers, and underscores.")
-    if len(password) < 8:
-        errors.append("Password must be at least 8 characters.")
-    if len(password) > 72:
-        errors.append("Password cannot be longer than 72 characters.")
-    if password != confirm_password:
-        errors.append("Passwords do not match.")
-    if not re.search(r"[A-Z]", password):
-        errors.append("Password needs at least one uppercase letter.")
-    if not re.search(r"[0-9]", password):
-        errors.append("Password needs at least one number.")
-    if await auth_service.get_user_by_email(db, email.lower()):
+    if await auth_service.get_user_by_email(db, data.email.lower()):
         errors.append("Email is already registered.")
-    if await auth_service.get_user_by_username(db, username):
+    if await auth_service.get_user_by_username(db, data.username):
         errors.append("Username is already taken.")
 
     if errors:
-        return templates.TemplateResponse(
-            request,
-            "auth/signup.html",
-            {"errors": errors, "username": username, "email": email},
-        )
+        raise HTTPException(status_code=400, detail=errors[0] if len(errors) == 1 else errors)
 
-    await auth_service.create_user(db, UserCreate(username=username, email=email.lower(), password=password))
-    return RedirectResponse(
-        url="/login?msg=Account+created!+Please+log+in.&msg_type=success",
-        status_code=302,
+    await auth_service.create_user(
+        db,
+        UserCreate(username=data.username, email=data.email.lower(), password=data.password),
+    )
+    return JSONResponse(
+        {"ok": True, "message": "Account created! Please log in."},
+        status_code=201,
     )
 
 
@@ -92,10 +83,7 @@ async def login_for_access_token(
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     token = create_access_token(data={"sub": str(user.id)})
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
+    return {"access_token": token, "token_type": "bearer"}
 
 
 # ── Current User endpoint ────────────────────────────────────────────────────
@@ -112,17 +100,15 @@ def forgot_password_page(request: Request, msg: str = "", msg_type: str = ""):
     return templates.TemplateResponse(request, "auth/forgot_password.html", {"flash": flash})
 
 
-@router.post("/forgot-password", include_in_schema=False)
+@router.post("/forgot-password")
 async def process_forgot_password(
     request: Request,
     background_tasks: BackgroundTasks,
+    data: PasswordResetRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
-    email: str = Form(...),
 ):
-    import logging
-    _log = logging.getLogger(__name__)
     try:
-        user = await auth_service.get_user_by_email(db, email.lower())
+        user = await auth_service.get_user_by_email(db, data.email.lower())
         if user:
             # Save plain values NOW — after db.commit() inside create_reset_token,
             # the ORM object is expired and accessing .email/.username would trigger
@@ -130,14 +116,11 @@ async def process_forgot_password(
             user_email = user.email
             user_username = user.username
 
-            # Generate / refresh reset token (commits internally)
             token = await auth_service.create_reset_token(db, user.id)
 
-            # Build the absolute reset link
             base = str(request.base_url).rstrip("/")
             reset_link = f"{base}/reset-password?token={token}"
 
-            # Enqueue email in background so response is not blocked
             background_tasks.add_task(
                 send_password_reset_email,
                 to_email=user_email,
@@ -145,14 +128,17 @@ async def process_forgot_password(
                 reset_link=reset_link,
             )
     except Exception as exc:
-        _log.exception("Forgot-password error: %s", exc)
-        raise HTTPException(status_code=500, detail="Failed to process reset request. Check server logs.")
+        logger.exception("Forgot-password error: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process reset request. Check server logs.",
+        )
 
-    # Generic message prevents user enumeration
-    return RedirectResponse(
-        url="/login?msg=If+the+email+is+registered,+a+password+reset+link+has+been+sent.+Please+check+your+inbox+and+spam+folder.&msg_type=success",
-        status_code=302,
-    )
+    # Generic message to prevent user enumeration
+    return JSONResponse({
+        "ok": True,
+        "message": "If the email is registered, a password reset link has been sent. Please check your inbox and spam folder.",
+    })
 
 
 @router.get("/reset-password", include_in_schema=False)
@@ -168,9 +154,7 @@ async def reset_password_page(
             status_code=302,
         )
 
-    return templates.TemplateResponse(
-        request, "auth/reset_password.html", {"token": token}
-    )
+    return templates.TemplateResponse(request, "auth/reset_password.html", {"token": token})
 
 
 @router.post("/reset-password")
@@ -178,20 +162,16 @@ async def process_reset_password(
     data: PasswordResetConfirm,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-
-    # Validate token
     reset_token = await auth_service.get_valid_reset_token(db, data.token)
     if not reset_token:
         raise HTTPException(
             status_code=400,
-            detail="The password reset link is invalid or has expired."
+            detail="The password reset link is invalid or has expired.",
         )
 
-    # Perform Reset (Updates password, generates new DEK, deletes token)
     await auth_service.reset_password_with_token(db, reset_token, data.password)
 
-    from fastapi.responses import JSONResponse
     return JSONResponse({
         "ok": True,
-        "message": "Password reset successful! Please log in with your new password."
+        "message": "Password reset successful! Please log in with your new password.",
     })

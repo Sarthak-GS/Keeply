@@ -75,7 +75,7 @@ def _wants_json(request: Request) -> bool:
     content_type = request.headers.get("content-type", "")
     if "application/json" in content_type:
         return True
-    if request.url.path.startswith("/api/") or request.url.path in ("/token", "/reset-password"):
+    if request.url.path.startswith("/api/") or request.url.path in ("/token", "/reset-password", "/forgot-password", "/signup"):
         return True
     if "authorization" in request.headers:
         return True
