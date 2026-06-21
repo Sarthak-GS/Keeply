@@ -47,8 +47,8 @@
                                placeholder="Min 8 chars, 1 uppercase, 1 number"
                                oninput="updateStrength(this.value)"
                                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20">
-                        <button type="button" onclick="toggleVisibility('reg-password', this)" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white">Show</button>
+                        <button type="button" data-toggle="reg-password"
+                                class="toggle-pw-btn absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs text-slate-400 hover:text-white select-none">Show</button>
                     </div>
                     <!-- Strength bar -->
                     <div class="mt-2 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
@@ -123,17 +123,20 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     }
 });
 
-function toggleVisibility(id, btn) {
-    const el = document.getElementById(id);
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    el.type = el.type === 'password' ? 'text' : 'password';
-    btn.textContent = el.type === 'password' ? 'Show' : 'Hide';
-    el.focus();
-    if (start !== null && end !== null) {
-        el.setSelectionRange(start, end);
-    }
-}
+document.querySelectorAll('.toggle-pw-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        const el = document.getElementById(btn.dataset.toggle);
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        el.type = el.type === 'password' ? 'text' : 'password';
+        btn.textContent = el.type === 'password' ? 'Show' : 'Hide';
+        el.focus();
+        if (start !== null && end !== null) {
+            el.setSelectionRange(start, end);
+        }
+    });
+});
 
 function updateStrength(val) {
     let score = 0;

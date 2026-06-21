@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8000";
+let API = "https://keeply-o8ni.onrender.com";
 
 const $ = (s) => document.getElementById(s);
 const viewLogin = $("view-login");
@@ -16,7 +16,11 @@ function showToast(msg, isError = false) {
 
 // ── Init: decide which view to show ─────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get(["keeply_token"], (res) => {
+  chrome.storage.local.get(["keeply_token", "keeply_server_url"], (res) => {
+    if (res.keeply_server_url) {
+      API = res.keeply_server_url;
+      $("server-url").value = API;
+    }
     if (res.keeply_token) {
       showConnected();
     } else {
@@ -42,17 +46,24 @@ function showConnected() {
 let isLoggingIn = false;
 $("login-btn").addEventListener("click", async () => {
   if (isLoggingIn) return;
+  const serverUrl = $("server-url").value.trim().replace(/\/$/, "");
   const email = $("email").value.trim();
   const pw = $("password").value;
   const errEl = $("login-error");
   errEl.style.display = "none";
 
+  if (!serverUrl) {
+    errEl.textContent = "Server URL is required.";
+    errEl.style.display = "block";
+    return;
+  }
   if (!email || !pw) {
     errEl.textContent = "Both fields are required.";
     errEl.style.display = "block";
     return;
   }
 
+  API = serverUrl;
   isLoggingIn = true;
   const btn = $("login-btn");
   const origText = btn.textContent;
@@ -71,7 +82,10 @@ $("login-btn").addEventListener("click", async () => {
     });
     const data = await r.json();
     if (r.ok && data.access_token) {
-      chrome.storage.local.set({ keeply_token: data.access_token }, () => {
+      chrome.storage.local.set({ 
+        keeply_token: data.access_token,
+        keeply_server_url: API
+      }, () => {
         showToast("Connected!");
         isLoggingIn = false;
         btn.textContent = origText;
