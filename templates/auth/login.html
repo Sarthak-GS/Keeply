@@ -88,7 +88,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         await handleLogin(email, password);
         window.location.href = '/vault/dashboard';
     } catch (err) {
-        errorBox.textContent = '⚠️ ' + err.message;
+        errorBox.textContent = err.message;
         errorBox.classList.remove('hidden');
         btn.textContent = 'Sign In';
         btn.disabled = false;

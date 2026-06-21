@@ -13,7 +13,7 @@ router = APIRouter(prefix="/folders", tags=["Folders"])
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("")
+@router.get("", include_in_schema=False)
 async def folders_page(
     request: Request,
     current_user: CurrentUser,

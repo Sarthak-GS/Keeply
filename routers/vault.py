@@ -14,7 +14,7 @@ from utils.password_generator import generate_strong_password
 router = APIRouter(prefix="/vault", tags=["Vault"])
 templates = Jinja2Templates(directory="templates")
 
-@router.get("/dashboard")
+@router.get("/dashboard", include_in_schema=False)
 async def dashboard(
     request: Request,
     current_user: CurrentUser,
@@ -48,7 +48,7 @@ async def dashboard(
         },
     )
 
-@router.get("/new")
+@router.get("/new", include_in_schema=False)
 async def new_entry_page(
     request: Request,
     current_user: CurrentUser,
@@ -88,7 +88,7 @@ async def get_entry_password(
     plain = vault_service.get_decrypted_password(entry)
     return {"password": plain}
 
-@router.get("/{entry_id}")
+@router.get("/{entry_id}", include_in_schema=False)
 async def view_entry(
     entry_id: int,
     request: Request,
@@ -102,7 +102,7 @@ async def view_entry(
         request, "vault/entry_detail.html", {"user": current_user, "entry": entry}
     )
 
-@router.get("/{entry_id}/edit")
+@router.get("/{entry_id}/edit", include_in_schema=False)
 async def edit_entry_page(
     entry_id: int,
     request: Request,

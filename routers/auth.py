@@ -19,19 +19,19 @@ templates = Jinja2Templates(directory="templates")
 
 
 # ── Landing Page ──────────────────────────────────────────────────────────────
-@router.get("/")
+@router.get("/", include_in_schema=False)
 def landing(request: Request):
     return templates.TemplateResponse(request, "index.html", {"page_title": "Vaultify"})
 
 
 # ── Signup ────────────────────────────────────────────────────────────────────
-@router.get("/signup")
+@router.get("/signup", include_in_schema=False)
 def signup_page(request: Request, msg: str = "", msg_type: str = ""):
     flash = {"message": msg, "type": msg_type} if msg else None
     return templates.TemplateResponse(request, "auth/signup.html", {"flash": flash})
 
 
-@router.post("/signup")
+@router.post("/signup", include_in_schema=False)
 async def signup(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -76,7 +76,7 @@ async def signup(
 
 
 # ── Login (page only — auth is via JS fetch to /token) ───────────────────────
-@router.get("/login")
+@router.get("/login", include_in_schema=False)
 def login_page(request: Request, msg: str = "", msg_type: str = ""):
     flash = {"message": msg, "type": msg_type} if msg else None
     return templates.TemplateResponse(request, "auth/login.html", {"flash": flash})
@@ -106,13 +106,13 @@ async def get_me(current_user: CurrentUser):
 
 # ── Password Reset Flow ───────────────────────────────────────────────────────
 
-@router.get("/forgot-password")
+@router.get("/forgot-password", include_in_schema=False)
 def forgot_password_page(request: Request, msg: str = "", msg_type: str = ""):
     flash = {"message": msg, "type": msg_type} if msg else None
     return templates.TemplateResponse(request, "auth/forgot_password.html", {"flash": flash})
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", include_in_schema=False)
 async def process_forgot_password(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -155,7 +155,7 @@ async def process_forgot_password(
     )
 
 
-@router.get("/reset-password")
+@router.get("/reset-password", include_in_schema=False)
 async def reset_password_page(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],

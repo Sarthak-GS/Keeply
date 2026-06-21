@@ -102,16 +102,16 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
     # For browser requests → render a styled error page
     error_info = {
-        400: ("⚠️", "Bad Request", exc.detail or "The request was invalid."),
-        403: ("🚫", "Forbidden", exc.detail or "You don't have permission to access this."),
-        404: ("🔍", "Not Found", exc.detail or "This page doesn't exist or has been moved."),
-        422: ("📝", "Validation Error", exc.detail or "The submitted data is invalid."),
-        500: ("💥", "Server Error", exc.detail or "Something went wrong on our end."),
-        503: ("🔧", "Service Unavailable", exc.detail or "The service is temporarily unavailable."),
+        400: ("", "Bad Request", exc.detail or "The request was invalid."),
+        403: ("", "Forbidden", exc.detail or "You don't have permission to access this."),
+        404: ("", "Not Found", exc.detail or "This page doesn't exist or has been moved."),
+        422: ("", "Validation Error", exc.detail or "The submitted data is invalid."),
+        500: ("", "Server Error", exc.detail or "Something went wrong on our end."),
+        503: ("", "Service Unavailable", exc.detail or "The service is temporarily unavailable."),
     }
     icon, title, message = error_info.get(
         exc.status_code,
-        ("❌", "Error", exc.detail or "An unexpected error occurred."),
+        ("", "Error", exc.detail or "An unexpected error occurred."),
     )
     return templates.TemplateResponse(
         request,
@@ -148,7 +148,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         "errors/generic.html",
         {
             "status_code": 422,
-            "icon": "📝",
+            "icon": "",
             "title": "Validation Error",
             "message": detail,
         },

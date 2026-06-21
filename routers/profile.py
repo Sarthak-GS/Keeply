@@ -13,7 +13,7 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("")
+@router.get("", include_in_schema=False)
 async def profile_page(
     request: Request,
     current_user: CurrentUser,

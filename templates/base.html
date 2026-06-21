@@ -127,7 +127,7 @@
     {% if flash %}
     <div id="flash-banner"
           class="{% if flash.type == 'success' %}bg-emerald-900/60 border-emerald-500/30 text-emerald-300{% else %}bg-red-900/60 border-red-500/30 text-red-300{% endif %} border-b px-4 py-3 text-center text-sm font-medium backdrop-blur">
-        {% if flash.type == 'success' %}{% else %}⚠️{% endif %}
+
         {{ flash.message }}
         <button onclick="document.getElementById('flash-banner').remove()"
                 class="ml-3 opacity-60 hover:opacity-100">✕</button>

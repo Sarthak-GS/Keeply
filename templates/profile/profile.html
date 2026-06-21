@@ -102,7 +102,7 @@ document.getElementById('change-password-form').addEventListener('submit', async
             localStorage.removeItem("dek");
             window.location.href = '/login?msg=' + encodeURIComponent(result.message || 'Password updated.') + '&msg_type=success';
         } else {
-            errorBox.textContent = '⚠️ ' + (result.detail || 'Failed to update password.');
+            errorBox.textContent = (result.detail || 'Failed to update password.');
             errorBox.classList.remove('hidden');
             submitBtn.disabled = false;
             submitBtn.innerText = origText;
