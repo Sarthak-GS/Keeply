@@ -16,8 +16,8 @@ function showToast(msg, isError = false) {
 
 // ── Init: decide which view to show ─────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get(["vaultify_token"], (res) => {
-    if (res.vaultify_token) {
+  chrome.storage.local.get(["keeply_token"], (res) => {
+    if (res.keeply_token) {
       showConnected();
     } else {
       showLogin();
@@ -71,7 +71,7 @@ $("login-btn").addEventListener("click", async () => {
     });
     const data = await r.json();
     if (r.ok && data.access_token) {
-      chrome.storage.local.set({ vaultify_token: data.access_token }, () => {
+      chrome.storage.local.set({ keeply_token: data.access_token }, () => {
         showToast("Connected!");
         isLoggingIn = false;
         btn.textContent = origText;
@@ -86,7 +86,7 @@ $("login-btn").addEventListener("click", async () => {
       btn.disabled = false;
     }
   } catch {
-    errEl.textContent = "Cannot reach Vaultify server.";
+    errEl.textContent = "Cannot reach Keeply server.";
     errEl.style.display = "block";
     isLoggingIn = false;
     btn.textContent = origText;
@@ -101,7 +101,7 @@ $("password").addEventListener("keydown", (e) => {
 
 // ── Logout ──────────────────────────────────────────────────────────────────
 $("logout-btn").addEventListener("click", () => {
-  chrome.storage.local.remove(["vaultify_token"], () => {
+  chrome.storage.local.remove(["keeply_token"], () => {
     showToast("Disconnected");
     showLogin();
   });
@@ -149,9 +149,9 @@ function loadPending() {
 async function saveCred(idx, btn) {
   if (btn.disabled) return;
   const res = await new Promise((r) =>
-    chrome.storage.local.get(["vaultify_token", "pending_creds"], r)
+    chrome.storage.local.get(["keeply_token", "pending_creds"], r)
   );
-  const token = res.vaultify_token;
+  const token = res.keeply_token;
   const list = res.pending_creds || [];
   const cred = list[idx];
   if (!token || !cred) return;
@@ -172,7 +172,7 @@ async function saveCred(idx, btn) {
         username: cred.username,
         password: cred.password,
         url: cred.url,
-        notes: "Saved via Vaultify extension",
+        notes: "Saved via Keeply extension",
         folder_id: null,
       }),
     });
@@ -186,7 +186,7 @@ async function saveCred(idx, btn) {
       btn.textContent = origText;
       if (r.status === 401) {
         showToast("Session expired — reconnect.", true);
-        chrome.storage.local.remove(["vaultify_token"]);
+        chrome.storage.local.remove(["keeply_token"]);
         showLogin();
       } else {
         showToast("Save failed.", true);

@@ -21,7 +21,7 @@ templates = Jinja2Templates(directory="templates")
 # ── Landing Page ──────────────────────────────────────────────────────────────
 @router.get("/", include_in_schema=False)
 def landing(request: Request):
-    return templates.TemplateResponse(request, "index.html", {"page_title": "Vaultify"})
+    return templates.TemplateResponse(request, "index.html", {"page_title": "Keeply"})
 
 
 # ── Signup ────────────────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ async def process_forgot_password(
 
     # Generic message prevents user enumeration
     return RedirectResponse(
-        url="/login?msg=If+the+email+is+registered,+a+password+reset+link+has+been+sent.&msg_type=success",
+        url="/login?msg=If+the+email+is+registered,+a+password+reset+link+has+been+sent.+Please+check+your+inbox+and+spam+folder.&msg_type=success",
         status_code=302,
     )
 

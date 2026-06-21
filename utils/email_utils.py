@@ -13,7 +13,7 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
     
     # 1. Create message container
     message = MIMEMultipart("alternative")
-    message["Subject"] = "Reset Your Vaultify Password"
+    message["Subject"] = "Reset Your Keeply Password"
     message["From"] = settings.SMTP_FROM_EMAIL
     message["To"] = to_email
 
@@ -100,11 +100,11 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
     <body>
         <div class="container">
             <div class="header">
-                <h1>Vaultify</h1>
+                <h1>Keeply</h1>
             </div>
             <div class="content">
                 <p>Hello <strong>{username}</strong>,</p>
-                <p>We received a request to reset the password for your Vaultify account. Click the button below to set a new password:</p>
+                <p>We received a request to reset the password for your Keeply account. Click the button below to set a new password:</p>
                 <div class="button-container">
                     <a href="{reset_link}" class="btn" style="color: #ffffff;">Reset Password</a>
                 </div>
@@ -115,7 +115,7 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
                 </div>
             </div>
             <div class="footer">
-                <p>&copy; {datetime.now().year} Vaultify. Secure Password Manager.</p>
+                <p>&copy; {datetime.now().year} Keeply. Secure Password Manager.</p>
                 <p>This is an automated security transmission. Please do not reply directly.</p>
             </div>
         </div>
@@ -125,7 +125,6 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
 
     message.attach(MIMEText(html_content, "html"))
 
-    # 3. Setup SMTP connection using aiosmtplib
     try:
         smtp_client = aiosmtplib.SMTP(
             hostname=settings.SMTP_HOST,
@@ -135,7 +134,6 @@ async def send_password_reset_email(to_email: str, username: str, reset_link: st
         )
         await smtp_client.connect()
         
-        # Log in if credentials are provided in settings
         if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
             await smtp_client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             

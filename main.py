@@ -12,21 +12,18 @@ from sqlalchemy import text
 from config.settings import settings
 from database.session import engine, get_db
 
-# Import all models so SQLAlchemy registers them before create_all
-from models import user, vault_entry, folder, password_reset  # noqa: F401
+from models import user, vault_entry, folder, password_reset 
 from routers import auth, vault, folders, profile
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan ─────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
     from sqlalchemy import text
 
-    # Warm the connection pool in the background so startup isn't blocked
     async def _warm_pool():
         try:
             async with engine.begin() as conn:
@@ -39,10 +36,8 @@ async def lifespan(app: FastAPI):
     yield
 
 
-# ── App ───────────────────────────────────────────────────────────────────────
-app = FastAPI(title="Vaultify", version="1.0.0", docs_url="/docs", lifespan=lifespan)
+app = FastAPI(title="Keeply", version="1.0.0", docs_url="/docs", lifespan=lifespan)
 
-# Allow browser extension cross-origin requests
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
@@ -77,7 +72,10 @@ def _wants_json(request: Request) -> bool:
     accept = request.headers.get("accept", "")
     if "application/json" in accept:
         return True
-    if request.url.path.startswith("/api/") or request.url.path == "/token":
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        return True
+    if request.url.path.startswith("/api/") or request.url.path in ("/token", "/reset-password"):
         return True
     if "authorization" in request.headers:
         return True
@@ -89,18 +87,15 @@ def _wants_json(request: Request) -> bool:
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle all HTTPExceptions — return JSON for API, HTML for browser."""
-    # For 401 on browser requests → redirect to login
     if exc.status_code == 401 and not _wants_json(request):
         return RedirectResponse(url="/login", status_code=302)
 
-    # For API/fetch requests → return JSON
     if _wants_json(request):
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.detail},
         )
 
-    # For browser requests → render a styled error page
     error_info = {
         400: ("", "Bad Request", exc.detail or "The request was invalid."),
         403: ("", "Forbidden", exc.detail or "You don't have permission to access this."),
@@ -130,17 +125,29 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle pydantic/FastAPI validation errors gracefully."""
     errors = exc.errors()
-    # Build a human-readable summary
     messages = []
     for err in errors:
-        field = " → ".join(str(loc) for loc in err.get("loc", []))
-        messages.append(f"{field}: {err.get('msg', 'invalid')}")
+        loc = err.get("loc", [])
+        msg = err.get("msg", "invalid")
+        # Clean up default Pydantic prefix "Value error, "
+        if msg.startswith("Value error, "):
+            msg = msg.replace("Value error, ", "", 1)
+        
+        # Clean up field location representation by filtering out technical loc keywords
+        fields = [str(x) for x in loc if x not in ("body", "__root__")]
+        if fields:
+            field_name = " ".join(fields).replace("_", " ").title()
+            messages.append(f"{field_name}: {msg}")
+        else:
+            messages.append(msg)
+            
     detail = "; ".join(messages)
 
     if _wants_json(request):
+        from fastapi.encoders import jsonable_encoder
         return JSONResponse(
             status_code=422,
-            content={"detail": detail, "errors": errors},
+            content={"detail": detail, "errors": jsonable_encoder(errors)},
         )
 
     return templates.TemplateResponse(

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Vaultify Helper",
+  "name": "Keeply Helper",
   "version": "1.0",
-  "description": "Autosaves credentials to your Vaultify vault.",
+  "description": "Autosaves credentials to your Keeply vault.",
   "permissions": [
     "activeTab",
     "storage"
