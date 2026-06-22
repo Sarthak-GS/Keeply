@@ -1,4 +1,4 @@
-let API = "https://keeply-o8ni.onrender.com";
+let API = "https://keeply-liard.vercel.app";
 
 const $ = (s) => document.getElementById(s);
 const viewLogin = $("view-login");
