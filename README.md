@@ -99,6 +99,11 @@ cp .env.example .env
 ```
 Fill in `.env` with your database credentials, a generated `SECRET_KEY`, and SMTP settings. See `.env.example` for all fields.
 
+You can generate a secure, random `SECRET_KEY` using the following Python command:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
 **4. Apply database migrations**
 ```bash
 alembic upgrade head
