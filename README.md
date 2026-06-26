@@ -25,7 +25,7 @@ Keeply is an open-source, self-hostable password manager with a clean web UI and
 
 - **Browser extension** — auto-captures login form submissions and saves to vault
 - **Secure email recovery** — password reset via `aiosmtplib` with spam-resistant headers
-- **Responsive UI** — works seamlessly across mobile, tablet, and desktop (including persistent keyboard focus when toggling passwords)
+- **Responsive UI** — works seamlessly across mobile, tablet, and desktop
 - **Folders & favourites** — organise vault entries with custom folders and icons
 - **Password generator** — built-in generator inside the vault entry form
 
