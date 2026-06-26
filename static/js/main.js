@@ -4,19 +4,27 @@ function showToast(message, isError = false) {
 
     toast.textContent = (isError ? '⚠️ ' : '') + message;
     toast.className = [
-        'fixed bottom-6 right-6 z-50 rounded-xl border px-5 py-3 text-sm font-medium shadow-glow backdrop-blur transition-all duration-300',
+        'rounded-xl border px-5 py-3 text-sm font-medium shadow-glow backdrop-blur transition-all duration-300 text-center sm:text-left pointer-events-none',
         isError
             ? 'border-red-500/30 bg-slate-900 text-red-300'
             : 'border-emerald-500/30 bg-slate-900 text-emerald-300',
     ].join(' ');
 
+    toast.classList.remove('hidden');
+    // Force a reflow to make the opacity transition play
+    toast.offsetHeight;
+
     toast.style.opacity = '1';
     toast.style.transform = 'translateY(0)';
 
     clearTimeout(toast._timer);
+    clearTimeout(toast._hideTimer);
     toast._timer = setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(8px)';
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 300);
     }, 3500);
 }
 

@@ -213,6 +213,13 @@
             data.folder_id = parseInt(data.folder_id, 10);
         }
 
+        // If password is blank on an edit form, remove it so the backend keeps the current password
+        {% if entry %}
+        if (data.hasOwnProperty('password') && data.password.trim() === '') {
+            delete data.password;
+        }
+        {% endif %}
+
         const action = form.getAttribute('action');
         try {
             const token = localStorage.getItem("access_token");
