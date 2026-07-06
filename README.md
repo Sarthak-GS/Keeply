@@ -37,10 +37,12 @@ The **Keeply Helper** extension runs in Chrome and Edge (Manifest V3). It silent
 
 ### Install the Extension
 
-1. Open Chrome and go to `chrome://extensions` (or `edge://extensions`).
-2. Enable **Developer mode** (toggle in the top-right corner).
-3. Click **Load unpacked** and select the `keeply-extension/` folder from this project.
-4. Pin the Keeply icon to your toolbar for quick access.
+1. Download the **Keeply Extension** from the project folder or the **[Google Drive folder](https://drive.google.com/drive/folders/14dhHNQyaRP8oGkEaLduTT8ITKxGXVJ5P?usp=sharing)**.
+   - Extract the downloaded files (if they are in a ZIP) and locate the `keeply-extension/` folder.
+2. Open Chrome and go to `chrome://extensions` (or `edge://extensions`).
+3. Enable **Developer mode** (toggle in the top-right corner).
+4. Click **Load unpacked** and select the `keeply-extension/` folder.
+5. Pin the **Keeply** icon to your toolbar for quick access.
 
 ### Connect to Your Account
 
